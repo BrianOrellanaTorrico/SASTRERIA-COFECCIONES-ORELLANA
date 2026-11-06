@@ -243,7 +243,7 @@
     </div>
     <div class="repair-picker">
       <span class="repair-picker-title" id="repairPickerTitle">SELECCIONA EL TIPO DE PRENDA</span>
-      <p class="repair-picker-hint">Las opciones se pueden administrar desde el catálogo cuando Supabase esté configurado.</p>
+      <p class="repair-picker-hint">Las opciones disponibles se muestran aquí y se pueden solicitar directamente al taller.</p>
       <div id="repairGarmentOptions" class="repair-options-grid" role="group" aria-labelledby="repairPickerTitle">
         <p class="repair-options-empty">Preparando opciones de arreglo…</p>
       </div>
@@ -303,7 +303,7 @@
     <div class="accordion">
         <details open>
             <summary>Medidas del cliente</summary>
-            <div class="inside">Pecho, cintura, cadera, hombros, manga, largo y otras medidas según la prenda. En la versión con base de datos podrán guardarse dentro del perfil del cliente.</div>
+            <div class="inside">Pecho, cintura, cadera, hombros, manga, largo y otras medidas según la prenda. Las medidas se coordinan directamente con el taller y no se almacenan en una cuenta en línea.</div>
         </details>
         <details>
             <summary>Telas y materiales</summary>
@@ -509,11 +509,11 @@
                 loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
             <a id="storeLocationLink" class="btn map-external-link" target="_blank" rel="noopener"
                href="https://goo.gl/maps/1KyVvY3ZVWbn6QiV8?g_st=ac">ABRIR EN GOOGLE MAPS</a>
-            <p id="storeLocationDescription" class="map-note">La ubicación y las referencias del taller se actualizarán desde el panel administrativo.</p>
+            <p id="storeLocationDescription" class="map-note">Consulta el mapa integrado o comunícate con los propietarios para confirmar la ubicación.</p>
             <div class="store-gallery-wrap">
                 <h3>CONOCE NUESTRO TALLER</h3>
                 <p class="map-note">Fotografías del lugar para que puedas reconocernos antes de visitarnos.</p>
-                <div id="storeLocationGallery" class="store-location-gallery"><p class="map-note">Cargando fotografías…</p></div>
+                <div id="storeLocationGallery" class="store-location-gallery"><p class="map-note">Próximamente compartiremos fotografías de nuestro taller.</p></div>
             </div>
         </div>
         <div class="panel">
@@ -604,7 +604,7 @@
       <div class="admin-actions"><button class="btn outline" onclick="addFabricRow()">+ AGREGAR TELA</button><button class="btn" onclick="saveFabrics()">GUARDAR TELAS</button></div>
       <div id="tariffStatus" class="status" aria-live="polite"></div>
     </div>
-    <div class="panel admin-profile-panel" id="adminProfilesPanel" style="margin-top:16px"><h3 style="font-size:18px">Cuentas y permisos</h3><p class="sub">El administrador principal puede preparar cuentas de propietario. Los propietarios y el administrador principal pueden crear cuentas delegadas. Cada cuenta recibe permisos personalizados.</p><div class="admin-login-grid"><input id="newAdminName" placeholder="Nombre completo"><input id="newAdminPhone" placeholder="Teléfono"><input id="newAdminCI" placeholder="CI"><input id="newAdminUser" placeholder="Usuario"><input id="newAdminPass" type="password" placeholder="Contraseña"><select id="newAdminRole"><option value="delegado">Administrador delegado</option><option value="owner">Propietario (solo configuración inicial)</option></select></div><div class="permission-editor"><strong>Permisos para esta cuenta</strong><div class="permission-options"><label><input type="checkbox" name="newAdminPermission" value="pedidos" checked> Ver y gestionar pedidos</label><label><input type="checkbox" name="newAdminPermission" value="pagos"> Verificar pagos QR</label><label><input type="checkbox" name="newAdminPermission" value="catalogo"> Editar catálogo y precios</label></div><p class="map-note">Las cuentas de propietario deben configurarse expresamente; no se crean automáticamente. En producción, los permisos deberán aplicarse también en la base de datos.</p></div><div class="admin-actions"><button class="btn" onclick="createDelegatedAdmin()">CREAR CUENTA</button></div><div id="delegatedAdmins"></div></div><div class="panel" style="margin-top:16px" id="passwordPanel"><h3 style="font-size:18px">Seguridad de la cuenta</h3><p class="sub">Para cambiar una contraseña se exige el teléfono asociado y la contraseña anterior.</p><div class="admin-login-grid"><input id="changePhone" placeholder="Teléfono asociado"><input id="oldPassword" type="password" placeholder="Contraseña anterior"><input id="newPassword" type="password" placeholder="Nueva contraseña"><input id="newPassword2" type="password" placeholder="Repetir nueva contraseña"></div><div class="admin-actions"><button class="btn" onclick="changeCurrentPassword()">CAMBIAR CONTRASEÑA</button></div><div id="passwordStatus" class="status"></div></div>
+    <div class="panel admin-profile-panel" id="adminProfilesPanel" style="margin-top:16px"><h3 style="font-size:18px">Cuentas y permisos</h3><p class="sub">El administrador principal puede preparar cuentas de propietario. Los propietarios y el administrador principal pueden crear cuentas delegadas. Cada cuenta recibe permisos personalizados.</p><div class="admin-login-grid"><input id="newAdminName" placeholder="Nombre completo"><input id="newAdminPhone" placeholder="Teléfono"><input id="newAdminCI" placeholder="CI"><input id="newAdminUser" placeholder="Usuario"><input id="newAdminPass" type="password" placeholder="Contraseña"><select id="newAdminRole"><option value="delegado">Administrador delegado</option><option value="owner">Propietario (solo configuración inicial)</option></select></div><div class="permission-editor"><strong>Permisos para esta cuenta</strong><div class="permission-options"><label><input type="checkbox" name="newAdminPermission" value="pedidos" checked> Ver y gestionar pedidos</label><label><input type="checkbox" name="newAdminPermission" value="pagos"> Verificar pagos QR</label><label><input type="checkbox" name="newAdminPermission" value="catalogo"> Editar catálogo y precios</label></div><p class="map-note">Las cuentas de propietario deben configurarse expresamente; no se crean automáticamente. Las cuentas y los datos de administración de esta versión se guardan únicamente en este navegador.</p></div><div class="admin-actions"><button class="btn" onclick="createDelegatedAdmin()">CREAR CUENTA</button></div><div id="delegatedAdmins"></div></div><div class="panel" style="margin-top:16px" id="passwordPanel"><h3 style="font-size:18px">Seguridad de la cuenta</h3><p class="sub">Para cambiar una contraseña se exige el teléfono asociado y la contraseña anterior.</p><div class="admin-login-grid"><input id="changePhone" placeholder="Teléfono asociado"><input id="oldPassword" type="password" placeholder="Contraseña anterior"><input id="newPassword" type="password" placeholder="Nueva contraseña"><input id="newPassword2" type="password" placeholder="Repetir nueva contraseña"></div><div class="admin-actions"><button class="btn" onclick="changeCurrentPassword()">CAMBIAR CONTRASEÑA</button></div><div id="passwordStatus" class="status"></div></div>
   </div>
 </div>
 
@@ -621,13 +621,6 @@
         <button class="btn" onclick="closeModal()">ACEPTAR</button>
     </div>
 </div>
-
-<!-- Configuración local y conexión -->
-<script src="assets/js/config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/core/supabase-client.js"></script>
-<script src="assets/js/services/catalog-service.js"></script>
-<script src="assets/js/services/location-service.js"></script>
 
 <script src="assets/js/app.js" defer></script>
 </body>
