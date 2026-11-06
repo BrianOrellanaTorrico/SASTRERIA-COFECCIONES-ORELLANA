@@ -1,6 +1,8 @@
 -- Migración 2026-11-06: pedidos web públicos y revisión de pagos.
 -- Ejecutar una sola vez en Supabase SQL Editor.
 drop policy if exists "orders_public_repair_insert" on public.orders;
+drop policy if exists "orders_public_test_insert" on public.orders;
+drop policy if exists "orders_authenticated_test_insert" on public.orders;
 drop policy if exists "orders_public_request_insert" on public.orders;
 create policy "orders_public_request_insert" on public.orders
 for insert to anon
