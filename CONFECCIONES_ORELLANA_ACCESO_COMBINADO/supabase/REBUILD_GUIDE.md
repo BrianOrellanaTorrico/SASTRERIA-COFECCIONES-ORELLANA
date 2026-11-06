@@ -20,5 +20,5 @@ La web pública no escribe directamente en `orders` ni puede leer pedidos. Enví
 - Los propietarios tienen acceso completo.
 - La subida de imágenes de catálogo requiere permiso `catalogo`.
 
-## Pendientes de integración
+## Integración ya preparada\n- El catálogo de confección y el selector de arreglos se alimentan de Supabase.\n- Las telas compatibles se consultan por prenda.\n- El envío de pedidos usa la RPC pública validada; los pedidos quedan privados.\n- La tabla administrativa separa permisos de pedidos y pagos.\n\n## Pendientes de integración
 La capa de envío se añade en `assets/js/services/order-service.js`. La interfaz de cliente y el panel administrativo deben terminar de migrarse para eliminar el almacenamiento local de pedidos y las credenciales locales antiguas. No publicar la rama como producción hasta completar y probar esa migración.
