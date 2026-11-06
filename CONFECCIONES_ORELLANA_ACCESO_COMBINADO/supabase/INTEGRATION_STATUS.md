@@ -8,6 +8,9 @@
 - Lectura y actualización de pedidos existentes en `public.orders`.
 - Alta, edición y activación/desactivación de prendas y arreglos.
 - Alta, edición y activación/desactivación de telas.
+- Edición de dirección, referencia del mapa y enlace de Google Maps desde el panel administrativo.
+- Galería pública de fotografías del taller, con carga múltiple y eliminación desde el panel.
+- Fotografías de ubicación almacenadas en el bucket público `catalogo`, carpeta `ubicacion/`.
 - Asignación y eliminación de compatibilidades `garment_fabrics`.
 - Subida de fotografías al bucket `catalogo` y registro en `garment_images`.
 - Enlaces desde la página de clientes y acceso directo mediante `admin.html`.
@@ -15,7 +18,7 @@
 ## Antes de probarlo
 1. Crear `assets/js/config.js` a partir de `config.example.js` y completar URL + clave pública anon/publishable.
 2. Si ya existen las tablas V1 `categories`, `products`, `orders` y `profiles`, ejecutar `supabase/COMPATIBILITY_FROM_V1.sql`; si el proyecto está vacío, ejecutar `supabase/schema.sql`.
-3. Ejecutar `supabase/migrations/20261106_public_orders.sql` en ambos casos.
+3. Ejecutar `supabase/migrations/20261106_public_orders.sql` y `supabase/migrations/20261106_store_location.sql` en ambos casos.
 4. Crear la cuenta del propietario en Supabase Auth.
 5. Insertar/actualizar el perfil con el mismo UUID de Auth y `role = 'owner'` desde un entorno seguro. No permitir que un usuario cambie su propio rol.
 6. Probar el acceso y las operaciones con una cuenta de prueba antes de cargar información real.
@@ -36,3 +39,10 @@
 - Pendiente de ejecución en el proyecto Supabase: aplicar primero `COMPATIBILITY_FROM_V1.sql` si se conservan las tablas V1 y luego `migrations/20261106_public_orders.sql` desde SQL Editor.
 - Pendiente de prueba de extremo a extremo: registrar un pedido de prueba, comprobarlo en `admin.html` y revisar actualización de pago/estado.
 - Los perfiles delegados por módulo todavía requieren políticas/roles específicos en Supabase; no se deben considerar terminados por el control visual del navegador.
+
+
+## Ubicación y galería del taller
+- La migración `supabase/migrations/20261106_store_location.sql` crea `public.store_location` y `public.store_location_images` con lectura pública y escritura exclusiva de cuentas `owner`/`admin`.
+- Aplicar esta migración en Supabase SQL Editor después del esquema inicial o de `COMPATIBILITY_FROM_V1.sql`.
+- El panel `admin.html` contiene la sección **Ubicación del taller**; el cliente carga mapa y fotografías desde Supabase al abrir la página.
+- Las imágenes admitidas son JPG, PNG, WEBP y GIF, con un límite de 8 MB por archivo.
