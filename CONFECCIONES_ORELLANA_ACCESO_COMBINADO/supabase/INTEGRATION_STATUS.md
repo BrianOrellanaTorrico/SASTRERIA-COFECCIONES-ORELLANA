@@ -24,3 +24,11 @@
 - Conectar el catálogo de `index.html` para que lea los datos de Supabase.
 - Implementar permisos delegados por módulo en la base de datos y en la interfaz.
 - Revisar las políticas RLS y el flujo de pedidos de clientes antes de publicar para uso real.
+
+
+## Ajustes de conexión y seguridad para el flujo de arreglos
+- La política RLS `orders_public_repair_insert` permite a visitantes anónimos registrar exclusivamente solicitudes de arreglos sin precio ni pago requerido.
+- La tabla no permite a visitantes anónimos consultar o modificar pedidos.
+- Netlify genera `assets/js/config.js` durante el build a partir de `SUPABASE_URL` y `SUPABASE_ANON_KEY`; no se guarda la configuración del proyecto en Git.
+- Para desplegar, configurar la base de Netlify como `CONFECCIONES_ORELLANA_ACCESO_COMBINADO`, ejecutar `npm run build` y publicar `.`.
+- El envío de pedidos de confección y la migración completa del catálogo cliente siguen pendientes.
