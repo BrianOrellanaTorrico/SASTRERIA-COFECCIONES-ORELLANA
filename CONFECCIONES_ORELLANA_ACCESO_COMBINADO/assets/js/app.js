@@ -437,45 +437,46 @@ function initializeApp(){
   setupImageUploads();
 }
 
-function submitOrder(e){
+async function submitOrder(e){
   e.preventDefault();
-  if (!verified) {
-    alert('Primero debe verificarse el Carnet de Identidad.');
-    document.getElementById('ci')?.focus();
-    return;
-  }
+  if (!verified) { alert('Primero debe verificarse el Carnet de Identidad.'); document.getElementById('ci')?.focus(); return; }
   const name = document.getElementById('name')?.value.trim() || '';
+  const phone = document.getElementById('phone')?.value.trim() || '';
   if (!name) { alert('Ingrese el nombre completo.'); return; }
+  if (!phone) { alert('Ingrese un teléfono de contacto.'); return; }
   const serviceParts = (document.getElementById('service')?.value || '').split('|');
   const service = serviceParts[0] || 'Servicio por confirmar';
-  const total = document.getElementById('rTotal')?.textContent || 'Bs. 0.00';
+  const totalText = document.getElementById('rTotal')?.textContent || '';
+  const quotedTotal = Number(totalText.replace(/[^0-9,.-]/g, '').replace(/\.(?=.*\.)/g, '').replace(',', '.'));
   const order = {
-    id: 'ORD-' + Date.now().toString().slice(-7),
-    date: new Date().toLocaleString('es-BO'),
-    name,
-    ci: currentCI,
-    phone: document.getElementById('phone')?.value || '',
-    service,
-    total,
+    name, phone, service,
+    quotedTotal: Number.isFinite(quotedTotal) ? quotedTotal : null,
     requestType: document.getElementById('unknownMeasurements')?.checked ? 'Solicitud de medidas' : 'Pedido normal',
     measurementsUnknown: !!document.getElementById('unknownMeasurements')?.checked,
     measurements: document.getElementById('measurements')?.value || '',
     fabric: document.getElementById('fabric')?.value || 'Por confirmar',
     color: document.getElementById('color')?.value || '',
     details: document.getElementById('details')?.value || '',
-    payment: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : (selectedPay || 'QR'),
-    paymentStatus: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : 'Pendiente de verificación',
-    status: document.getElementById('unknownMeasurements')?.checked ? 'Solicitud de medidas' : 'Pedido recibido',
-    items: cart.length ? JSON.parse(JSON.stringify(cart)) : [],
-    referenceImage: (()=>{const image=document.getElementById('referencePreview');return image && !image.hidden && image.hasAttribute('src') ? image.src : '';})()
+    payment: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : 'Sin adelanto obligatorio',
+    paymentStatus: 'Pendiente de revisión por el taller',
+    items: cart.map(item => ({...item})),
+    referenceImage: ''
   };
-  const orders = readLocalArray('orellana_orders');
-  orders.unshift(order);
-  localStorage.setItem('orellana_orders', JSON.stringify(orders));
-  const modalText = document.getElementById('modalText');
-  if (modalText) modalText.textContent = order.requestType === 'Solicitud de medidas' ? 'Solicitud ' + order.id + ' registrada. No se solicitó adelanto ni se requiere QR. Contacta con los propietarios para coordinar tus medidas.' : 'Pedido ' + order.id + ' recibido. Cliente: ' + name + ' | Total referencial: ' + order.total;
-  document.getElementById('modal')?.classList.add('open');
-  renderAdminOrders();
+  const submitButton = document.querySelector('#orderForm button[type="submit"]');
+  if (submitButton) { submitButton.disabled = true; submitButton.dataset.originalText = submitButton.textContent; submitButton.textContent = 'ENVIANDO…'; }
+  try {
+    const orderId = await window.OrellanaOrderService.submit(order);
+    const modalText = document.getElementById('modalText');
+    if (modalText) modalText.textContent = order.measurementsUnknown
+      ? 'Solicitud registrada correctamente. Código: ' + orderId + '. No se solicitó adelanto ni se requiere QR. Contacta con CONFECCIONES ORELLANA para coordinar tus medidas.'
+      : 'Pedido recibido correctamente. Código: ' + orderId + '. El total es referencial y el taller confirmará los detalles.';
+    document.getElementById('modal')?.classList.add('open');
+  } catch (error) {
+    console.error('[ORELLANA] No se pudo enviar el pedido:', error);
+    alert('No se pudo registrar el pedido. Comprueba tu conexión o inténtalo nuevamente. Detalle: ' + (error?.message || 'Error desconocido'));
+  } finally {
+    if (submitButton) { submitButton.disabled = false; submitButton.textContent = submitButton.dataset.originalText || 'ENVIAR PEDIDO'; }
+  }
 }
 
 function readLocalArray(key){
