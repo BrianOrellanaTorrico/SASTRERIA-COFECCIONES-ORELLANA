@@ -162,3 +162,105 @@ using (bucket_id = 'catalogo' and public.is_catalog_manager());
 
 -- Índice para cargar primero los pedidos más recientes en el panel administrativo.
 create index if not exists orders_created_at_desc_idx on public.orders (created_at desc);
+
+
+-- Configuración general del sitio (QR oficial y fotografía de ubicación).
+create table if not exists public.site_settings (
+  id smallint primary key default 1 check (id = 1),
+  qr_storage_path text,
+  location_photo_path text,
+  updated_at timestamptz not null default now()
+);
+insert into public.site_settings (id) values (1) on conflict (id) do nothing;
+alter table public.site_settings enable row level security;
+
+-- Ubicación pública y galería del taller.
+create table if not exists public.store_location (
+  id boolean primary key default true check (id = true),
+  address text not null default '',
+  map_query text not null default 'CONFECCIONES ORELLANA',
+  maps_url text not null default 'https://goo.gl/maps/1KyVvY3ZVWbn6QiV8?g_st=ac',
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.store_location_images (
+  id uuid primary key default gen_random_uuid(),
+  storage_path text not null unique,
+  alt_text text not null default '',
+  sort_order bigint not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table public.store_location enable row level security;
+alter table public.store_location_images enable row level security;
+
+insert into public.store_location (id, address, map_query, maps_url)
+values (true, '', 'CONFECCIONES ORELLANA', 'https://goo.gl/maps/1KyVvY3ZVWbn6QiV8?g_st=ac')
+on conflict (id) do nothing;
+
+-- Bucket independiente para el QR oficial.
+insert into storage.buckets (id, name, public)
+values ('qr-pagos', 'qr-pagos', true)
+on conflict (id) do update set public = true;
+
+-- Políticas adicionales: lectura pública y escritura solo para owner/admin.
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='site_settings' and policyname='site_settings_public_read') then
+    create policy site_settings_public_read on public.site_settings
+    for select to anon, authenticated using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='site_settings' and policyname='site_settings_manager_write') then
+    create policy site_settings_manager_write on public.site_settings
+    for all to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location' and policyname='store_location_public_read') then
+    create policy store_location_public_read on public.store_location
+    for select to anon, authenticated using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location' and policyname='store_location_manager_insert') then
+    create policy store_location_manager_insert on public.store_location
+    for insert to authenticated with check (public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location' and policyname='store_location_manager_update') then
+    create policy store_location_manager_update on public.store_location
+    for update to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location_images' and policyname='store_location_images_public_read') then
+    create policy store_location_images_public_read on public.store_location_images
+    for select to anon, authenticated using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location_images' and policyname='store_location_images_manager_insert') then
+    create policy store_location_images_manager_insert on public.store_location_images
+    for insert to authenticated with check (public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='store_location_images' and policyname='store_location_images_manager_delete') then
+    create policy store_location_images_manager_delete on public.store_location_images
+    for delete to authenticated using (public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='qr_payments_public_read') then
+    create policy qr_payments_public_read on storage.objects
+    for select to anon, authenticated using (bucket_id='qr-pagos');
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='qr_payments_manager_upload') then
+    create policy qr_payments_manager_upload on storage.objects
+    for insert to authenticated with check (bucket_id='qr-pagos' and public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='qr_payments_manager_update') then
+    create policy qr_payments_manager_update on storage.objects
+    for update to authenticated using (bucket_id='qr-pagos' and public.is_catalog_manager())
+    with check (bucket_id='qr-pagos' and public.is_catalog_manager());
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='qr_payments_manager_delete') then
+    create policy qr_payments_manager_delete on storage.objects
+    for delete to authenticated using (bucket_id='qr-pagos' and public.is_catalog_manager());
+  end if;
+end $$;
+
+-- Realtime para avisos de pedidos en el panel administrativo.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname='supabase_realtime')
+     and not exists (select 1 from pg_publication_tables
+                     where pubname='supabase_realtime' and schemaname='public' and tablename='orders') then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+end $$;
