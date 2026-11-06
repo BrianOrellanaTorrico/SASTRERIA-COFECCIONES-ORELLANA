@@ -1,35 +1,34 @@
-import { writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 
-const projectDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const supabaseUrl = (process.env.SUPABASE_URL || "").trim();
-const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || "").trim();
+const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Faltan SUPABASE_URL y/o SUPABASE_ANON_KEY en las variables de entorno.");
+  console.error('Faltan las variables SUPABASE_URL y/o SUPABASE_ANON_KEY. Configúralas en Netlify o en tu entorno local.');
+  process.exit(1);
 }
 
-let parsedUrl;
-try {
-  parsedUrl = new URL(supabaseUrl);
-} catch {
-  throw new Error("SUPABASE_URL no es una URL válida.");
+if (!/^https:\/\//i.test(supabaseUrl)) {
+  console.error('SUPABASE_URL debe comenzar con https://.');
+  process.exit(1);
 }
 
-if (parsedUrl.protocol !== "https:") {
-  throw new Error("SUPABASE_URL debe utilizar HTTPS.");
+if (/service_role|sb_secret/i.test(supabaseAnonKey)) {
+  console.error('No uses una clave service_role o sb_secret en el frontend. Utiliza únicamente la clave pública anon/publishable.');
+  process.exit(1);
 }
 
-const keyLower = supabaseAnonKey.toLowerCase();
-if (keyLower.includes("service_role") || keyLower.includes("sb_secret")) {
-  throw new Error("No uses una clave service_role ni sb_secret en el frontend. Usa la clave pública anon/publishable.");
-}
+const output = resolve('assets/js/config.js');
+await mkdir(dirname(output), { recursive: true });
+const content = `// Archivo generado en el entorno de compilación. No editar ni versionar.\nwindow.ORELLANA_CONFIG = ${JSON.stringify({ supabaseUrl, supabaseAnonKey }, null, 2)};\n`;
+await writeFile(output, content, 'utf8');
+console.log('Configuración pública de Supabase generada en assets/js/config.js.');
 
-const config = {
-  supabaseUrl: parsedUrl.origin,
-  supabaseAnonKey
-};
-const outputPath = resolve(projectDir, "assets/js/config.js");
-await writeFile(outputPath, "window.ORELLANA_CONFIG = " + JSON.stringify(config, null, 2) + ";\n", "utf8");
-console.log("Configuración pública de Supabase generada en assets/js/config.js.");
+const dist = resolve('dist');
+await rm(dist, { recursive: true, force: true });
+await mkdir(dist, { recursive: true });
+await cp(resolve('index.html'), resolve(dist, 'index.html'));
+await cp(resolve('admin.html'), resolve(dist, 'admin.html'));
+await cp(resolve('assets'), resolve(dist, 'assets'), { recursive: true });
+console.log('Directorio dist preparado para Netlify.');
