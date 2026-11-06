@@ -28,6 +28,21 @@ window.OrellanaCatalogService = {
     return data || [];
   },
 
+  async listGarmentFabrics(garmentId) {
+    const { data, error } = await this.client()
+      .from("garment_fabrics")
+      .select("fabrics(id,name,price_per_meter)")
+      .eq("garment_id", garmentId);
+    if (error) throw error;
+    return (data || []).map(row => row.fabrics).filter(Boolean);
+  },
+
+  publicImageUrl(storagePath) {
+    if (!storagePath) return "";
+    const { data } = this.client().storage.from("catalogo").getPublicUrl(storagePath);
+    return data?.publicUrl || "";
+  },
+
   async uploadCatalogImage(file, garmentId) {
     if (!file || !garmentId) throw new Error("Falta la imagen o la prenda.");
     if (!file.type.startsWith("image/")) throw new Error("El archivo debe ser una imagen.");
