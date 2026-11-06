@@ -203,10 +203,7 @@ do $$ begin
     create policy catalog_public_read_images on public.garment_images for select to anon,authenticated using(true); end if;
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='garment_images' and policyname='catalog_manager_write_images') then
     create policy catalog_manager_write_images on public.garment_images for all to authenticated using(public.is_catalog_manager()) with check(public.is_catalog_manager()); end if;
-  if not exists(select 1 from pg_policies where schemaname='public' and tablename='orders' and policyname='orders_public_test_insert') then
-    create policy orders_public_test_insert on public.orders for insert to anon with check(customer_id is null and length(btrim(customer_name)) between 2 and 120 and length(btrim(customer_phone)) between 7 and 25 and jsonb_typeof(order_details)='object' and pg_column_size(order_details)<=65536 and quoted_total is null and status='pendiente' and payment_status in ('sin_revisar','no_requerido')); end if;
-  if not exists(select 1 from pg_policies where schemaname='public' and tablename='orders' and policyname='orders_authenticated_test_insert') then
-    create policy orders_authenticated_test_insert on public.orders for insert to authenticated with check(customer_id is null and length(btrim(customer_name)) between 2 and 120 and jsonb_typeof(order_details)='object' and quoted_total is null and status='pendiente' and payment_status in ('sin_revisar','no_requerido')); end if;
+  -- Las políticas de inserción se crean con reglas específicas en la migración posterior.
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='orders' and policyname='orders_customer_read_own') then
     create policy orders_customer_read_own on public.orders for select to authenticated using(customer_id=auth.uid() or public.is_catalog_manager()); end if;
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='orders' and policyname='orders_manager_update') then
