@@ -223,7 +223,7 @@ with check (public.has_permission('catalogo'));
 create policy orders_customer_read_own on public.orders
 for select to authenticated using (customer_id = auth.uid());
 create policy orders_manager_read on public.orders
-for select to authenticated using (public.has_permission('pedidos'));
+for select to authenticated using (public.has_permission('pedidos') or public.has_permission('pagos'));
 create policy orders_manager_update on public.orders
 for update to authenticated using (public.has_permission('pedidos'))
 with check (public.has_permission('pedidos'));
