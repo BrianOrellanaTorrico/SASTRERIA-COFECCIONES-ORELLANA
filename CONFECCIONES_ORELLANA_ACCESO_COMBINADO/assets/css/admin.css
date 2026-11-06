@@ -15,3 +15,13 @@
 .login-card{border-radius:8px}
 .login-card input{border-radius:4px}
 .login-card .button{border-radius:4px}
+
+/* Ubicación del taller y galería */
+.store-admin-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:13px;margin-top:18px}
+.store-admin-photo{margin:0;padding:9px;border:1px solid var(--line,#343434);border-radius:12px;background:rgba(255,255,255,.035)}
+.store-admin-photo img{display:block;width:100%;height:125px;object-fit:cover;border-radius:8px}
+.store-admin-photo figcaption{margin:8px 0;color:var(--muted,#aaa);font-size:12px;overflow-wrap:anywhere}
+.store-admin-photo .button{width:100%;font-size:11px;padding:8px}
+#ubicacionTaller .editor-card>input[type="text"],#ubicacionTaller .editor-card>input[type="url"]{width:100%}
+#storeLocationFiles{max-width:100%}
+@media(max-width:650px){.store-admin-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
