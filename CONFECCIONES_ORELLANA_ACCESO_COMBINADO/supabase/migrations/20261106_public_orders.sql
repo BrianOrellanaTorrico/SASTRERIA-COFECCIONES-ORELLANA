@@ -10,6 +10,8 @@ with check (
   customer_id is null
   and char_length(trim(customer_name)) between 2 and 120
   and char_length(trim(customer_phone)) between 7 and 25
+  and jsonb_typeof(order_details) = 'object'
+  and pg_column_size(order_details) <= 65536
   and quoted_total is null
   and status = 'pendiente'
   and payment_status in ('sin_revisar','no_requerido')
