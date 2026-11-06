@@ -61,6 +61,12 @@ async function loadDynamicCatalog(){
     if(fabric)fabric.innerHTML='<option value="">Telas pendientes de configuración</option>';
     return;
   }
+  const gridRoot=document.querySelector('#catalogo .grid');
+  if(gridRoot)gridRoot.innerHTML='<div class="catalog-placeholder">Cargando catálogo del taller…</div>';
+  const serviceRoot=document.getElementById('service');
+  if(serviceRoot)serviceRoot.innerHTML='<option value="">Cargando catálogo…</option>';
+  const repairRoot=document.getElementById('repairGarment');
+  if(repairRoot)repairRoot.innerHTML='<option value="">Cargando arreglos…</option>';
   try{
     const garments=await window.OrellanaCatalogService.listGarments();
     catalogById=new Map(garments.map(g=>[g.id,g]));
@@ -95,7 +101,7 @@ async function loadDynamicCatalog(){
       const repairs=garments.filter(g=>g.category==='arreglos');
       repair.innerHTML='<option value="">Selecciona una prenda para arreglar</option>'+repairs.map(g=>'<option value="'+g.id+'">'+escapeHtml(g.name)+'</option>').join('');
     }
-  }catch(error){console.error('[ORELLANA] No se pudo cargar el catálogo remoto:',error)}
+  }catch(error){if(gridRoot)gridRoot.innerHTML='<div class="catalog-placeholder">No se pudo cargar el catálogo. Verifica la configuración y las políticas de Supabase.</div>';console.error('[ORELLANA] No se pudo cargar el catálogo remoto:',error)}
 }
 
 async function startRepairOrder(){
