@@ -1,0 +1,8 @@
+# Configuración generada con variables de entorno de Netlify
+assets/js/config.js
+
+# Archivos locales y dependencias
+node_modules/
+.netlify/
+.DS_Store
+Thumbs.db
