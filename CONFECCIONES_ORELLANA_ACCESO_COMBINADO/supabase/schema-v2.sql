@@ -69,6 +69,36 @@ create index orders_created_at_idx on public.orders(created_at desc);
 create index orders_customer_id_idx on public.orders(customer_id);
 create index garments_category_active_idx on public.garments(category, active);
 
+create or replace function public.is_owner()
+returns boolean
+language sql stable security definer
+set search_path = public, auth
+as $
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'owner');
+$;
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql security definer
+set search_path = public
+as $
+begin
+  insert into public.profiles(id, display_name, phone)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', new.email, ''),
+    new.phone
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$;
+
+drop trigger if exists on_auth_user_created_profile on auth.users;
+create trigger on_auth_user_created_profile
+after insert on auth.users
+for each row execute procedure public.handle_new_auth_user();
+
 create or replace function public.has_permission(required_permission text)
 returns boolean
 language sql stable security definer
@@ -120,6 +150,31 @@ begin
 end;
 $$;
 
+create or replace function public.set_order_payment_status(
+  p_order_id uuid,
+  p_payment_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $
+begin
+  if not public.has_permission('pagos') then
+    raise exception 'No tienes permiso para verificar pagos.';
+  end if;
+  if p_payment_status not in ('sin_revisar','verificado','rechazado') then
+    raise exception 'Estado de pago no válido.';
+  end if;
+  update public.orders
+  set payment_status = p_payment_status, updated_at = now()
+  where id = p_order_id;
+  if not found then raise exception 'Pedido no encontrado.'; end if;
+end;
+$;
+revoke all on function public.set_order_payment_status(uuid,text) from public;
+grant execute on function public.set_order_payment_status(uuid,text) to authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.garments enable row level security;
 alter table public.fabrics enable row level security;
@@ -132,8 +187,8 @@ for select to authenticated using (id = auth.uid() or public.has_permission('cue
 
 create policy profiles_owner_manage on public.profiles
 for all to authenticated
-using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'owner'))
-with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'owner'));
+using (public.is_owner())
+with check (public.is_owner());
 
 -- Un administrador con permiso de cuentas puede registrar el perfil de una cuenta
 -- Auth ya creada, pero solo como administrador delegado; nunca puede crear propietarios.
@@ -208,6 +263,7 @@ insert into public.garments(name, category, description, sewing_price) values
 ('Pantalones','arreglos','Servicio de arreglo',null)
 on conflict (name, category) do nothing;
 
+-- Las cuentas Auth nuevas reciben perfil client automáticamente. El propietario inicial se promueve manualmente.
 -- El primer propietario se crea manualmente tras registrar su cuenta en Auth.
 -- Sustituye el UUID por auth.users.id desde el panel seguro de Supabase:
 -- insert into public.profiles(id, display_name, role, permissions)
