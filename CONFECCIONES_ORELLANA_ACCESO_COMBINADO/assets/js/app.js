@@ -50,7 +50,17 @@ function filterCatalog(g,b){
 }
 
 async function loadDynamicCatalog(){
-  if(!window.OrellanaCatalogService || !window.ORELLANA_SUPABASE)return;
+  if(!window.OrellanaCatalogService || !window.ORELLANA_SUPABASE){
+    const grid=document.querySelector('#catalogo .grid');
+    if(grid)grid.innerHTML='<div class="catalog-placeholder">El catálogo se habilitará al conectar la nueva base de datos del taller.</div>';
+    const serviceSelect=document.getElementById('service');
+    if(serviceSelect)serviceSelect.innerHTML='<option value="">Catálogo pendiente de configuración</option>';
+    const repair=document.getElementById('repairGarment');
+    if(repair)repair.innerHTML='<option value="">Arreglos pendientes de configuración</option>';
+    const fabric=document.getElementById('fabric');
+    if(fabric)fabric.innerHTML='<option value="">Telas pendientes de configuración</option>';
+    return;
+  }
   try{
     const garments=await window.OrellanaCatalogService.listGarments();
     catalogById=new Map(garments.map(g=>[g.id,g]));
@@ -352,6 +362,10 @@ async function renderOrderFabricOptions(){
   const parts=(service.value||'').split('|');
   const garmentId=parts[2];
   const select=document.getElementById('fabric');
+  if(!window.ORELLANA_SUPABASE){
+    if(select)select.innerHTML='<option value="">Conecta la base de datos para ver las telas</option>';
+    return;
+  }
   if(garmentId && window.OrellanaCatalogService && select){
     try{
       const fabrics=await window.OrellanaCatalogService.listGarmentFabrics(garmentId);
