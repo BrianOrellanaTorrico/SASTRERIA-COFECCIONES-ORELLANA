@@ -1,7 +1,7 @@
 // Aplicación
 // Estructura
 const cart=[];
-let customBase=0, customService="", customGender="male";
+let customBase=0, customService="", customGender="male", customGarmentId=null;
 const ADMIN={user:"",ci:"",password:"",phone:"",name:"Administrador",permissions:"completo",primary:true,...(window.ORELLANA_ADMIN_CONFIG||{})};
 // Acceso
 // Datos
@@ -10,11 +10,12 @@ if(localStorage.getItem("orellana_admin_login_config_version")!=="login-config-v
   localStorage.setItem("orellana_admin_login_config_version","login-config-v3");
 }
 let session={type:null,phone:"",ci:"",user:"",name:"",permissions:""};
-let selectedPay="QR"; let verified=false; let currentCI="";
+let selectedPay="Sin adelanto"; let verified=false; let currentCI="";
 const priceDefaults={"Pantalón":250,"Saco":500,"Pollera":300,"Vestido de 15 años":900,"Falda":180,"Vestido materno":700,"Vestido de novia":1500,"Vestido de novia para cholitas":1800};
 
 // Catálogo
-const originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
+let originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
+let catalogById = new Map();
 function filterCatalog(g,b){
   const grid=document.querySelector('#catalogo .grid');
   if(!grid)return;
@@ -48,7 +49,56 @@ function filterCatalog(g,b){
   grid.classList.toggle('filtered-mode',g!=='all');
 }
 
-function startRepairOrder(){
+async function loadDynamicCatalog(){
+  if(!window.OrellanaCatalogService || !window.ORELLANA_SUPABASE){
+    const grid=document.querySelector('#catalogo .grid');
+    if(grid)grid.innerHTML='<div class="catalog-placeholder">El catálogo se habilitará al conectar la nueva base de datos del taller.</div>';
+    const serviceSelect=document.getElementById('service');
+    if(serviceSelect)serviceSelect.innerHTML='<option value="">Catálogo pendiente de configuración</option>';
+    const repair=document.getElementById('repairGarment');
+    if(repair)repair.innerHTML='<option value="">Arreglos pendientes de configuración</option>';
+    const fabric=document.getElementById('fabric');
+    if(fabric)fabric.innerHTML='<option value="">Telas pendientes de configuración</option>';
+    return;
+  }
+  try{
+    const garments=await window.OrellanaCatalogService.listGarments();
+    catalogById=new Map(garments.map(g=>[g.id,g]));
+    const grid=document.querySelector('#catalogo .grid');
+    if(grid){
+      grid.innerHTML='';
+      garments.filter(g=>g.category==='femenina'||g.category==='masculina').forEach(g=>{
+        const gender=g.category==='masculina'?'male':'female';
+        const card=document.createElement('article');
+        card.className='card product-card '+(gender==='male'?'male-card':'female-card');
+        card.dataset.gender=gender;card.dataset.service=g.name;card.dataset.price=g.sewing_price??'';
+        const image=g.garment_images?.[0];
+        const imageUrl=image?window.OrellanaCatalogService.publicImageUrl(image.storage_path):'';
+        const priceLabel=g.sewing_price===null?'Cotización personalizada':'Desde Bs. '+Number(g.sewing_price).toLocaleString('es-BO');
+        card.innerHTML='<span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">'+(imageUrl?'<img loading="lazy" alt="'+escapeHtml(image.alt_text||g.name)+'" src="'+escapeHtml(imageUrl)+'">':'<div class="catalog-placeholder">CONFECCIONES<br>ORELLANA</div>')+'</div><h3>'+escapeHtml(g.name)+'</h3><p>'+escapeHtml(g.description||'Confección personalizada a medida.')+'</p><div class="price">'+priceLabel+'</div><button class="mini" type="button">PERSONALIZAR</button>';
+        card.querySelector('button').addEventListener('click',()=>openCustomizer(g.name,g.sewing_price,gender,g.id));
+        grid.appendChild(card);
+      });
+      originalCatalogOrder=[...grid.querySelectorAll('.product-card')];
+      const allTab=document.querySelector('.gender-tab[onclick*="all"]');
+      filterCatalog('all',allTab);
+    }
+    const serviceSelect=document.getElementById('service');
+    if(serviceSelect){
+      serviceSelect.innerHTML=garments.map(g=>'<option value="'+escapeHtml(g.name)+'|'+(g.sewing_price??'')+'|'+g.id+'">'+escapeHtml(g.name)+' · '+(g.sewing_price===null?'cotizar':'Bs. '+Number(g.sewing_price).toFixed(2))+'</option>').join('');
+      if(serviceSelect.options.length)serviceSelect.selectedIndex=0;
+      updateTotal();
+      await renderOrderFabricOptions();
+    }
+    const repair=document.getElementById('repairGarment');
+    if(repair){
+      const repairs=garments.filter(g=>g.category==='arreglos');
+      repair.innerHTML='<option value="">Selecciona una prenda para arreglar</option>'+repairs.map(g=>'<option value="'+g.id+'">'+escapeHtml(g.name)+'</option>').join('');
+    }
+  }catch(error){console.error('[ORELLANA] No se pudo cargar el catálogo remoto:',error)}
+}
+
+async function startRepairOrder(){
   const garment=document.getElementById('repairGarment');
   const details=document.getElementById('repairDetails');
   const status=document.getElementById('repairStatus');
@@ -57,39 +107,51 @@ function startRepairOrder(){
     if(garment)garment.focus();
     return;
   }
-  const repairName='Arreglo de '+garment.value;
-  openCustomizer(repairName,30,'repair');
+  const selectedGarment=catalogById.get(garment.value);
+  const repairName='Arreglo de '+(selectedGarment?.name||garment.options[garment.selectedIndex]?.text||'prenda');
+  await openCustomizer(repairName,selectedGarment?.sewing_price??null,'repair',selectedGarment?.id||null);
   const notes=document.getElementById('cNotes');
   if(notes)notes.value=details && details.value.trim() ? details.value.trim() : 'Tipo de arreglo por confirmar con el taller';
   refreshCustomizerTotal();
   if(status)status.textContent='Seleccionaste '+garment.value+'. Completa las especificaciones y añádelo al carrito para preparar el pedido.';
 }
-function openCustomizer(service,price,gender){
-  customService=service; customBase=getPrice(service,price); customGender=gender;
+async function openCustomizer(service,price,gender,garmentId=null){
+  customService=service; customBase=price===null||price===undefined?null:getPrice(service,price); customGender=gender; customGarmentId=garmentId;
   document.getElementById('customTitle').textContent='Personalizar: '+service;
   populateFabricSelect('cFabric', service);
+  const fabricSelect=document.getElementById('cFabric');
+  if(fabricSelect && garmentId && window.OrellanaCatalogService){
+    try{
+      const compatible=await window.OrellanaCatalogService.listGarmentFabrics(garmentId);
+      fabricSelect.innerHTML='<option value="">Selecciona una tela compatible</option>'+compatible.map(f=>'<option value="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+(f.price_per_meter===null?' · cotizar':' · Bs. '+Number(f.price_per_meter).toFixed(2)+'/m')+'</option>').join('');
+      if(!compatible.length)fabricSelect.innerHTML='<option value="">Tela por confirmar con el taller</option>';
+    }catch(error){console.warn('[ORELLANA] No se pudieron cargar telas compatibles:',error)}
+  }
   document.getElementById('cQty').value=1; document.getElementById('cColor').value=''; document.getElementById('cNotes').value='';
   document.querySelector('.customizer').classList.add('active'); refreshCustomizerTotal();
   document.getElementById('personalizador').scrollIntoView({behavior:'smooth',block:'center'});
 }
-function refreshCustomizerTotal(){const q=Math.max(1,Number(document.getElementById('cQty').value)||1);document.getElementById('cPrice').textContent='Bs. '+(customBase*q).toFixed(2)}
+function refreshCustomizerTotal(){const q=Math.max(1,Number(document.getElementById('cQty').value)||1);document.getElementById('cPrice').textContent=customBase===null?'Cotización pendiente':'Bs. '+(customBase*q).toFixed(2)}
 function addConfiguredProduct(){
   if(!customService)return alert('Selecciona primero una prenda.');
   const q=Math.max(1,Number(document.getElementById('cQty').value)||1);
-  cart.push({id:Date.now()+Math.random(),service:customService,price:customBase,qty:q,gender:customGender,fabric:document.getElementById('cFabric').value||'Tela por confirmar con el taller',color:document.getElementById('cColor').value||'Por confirmar',style:document.getElementById('cStyle').value,notes:document.getElementById('cNotes').value||'Sin observaciones'});
+  cart.push({id:Date.now()+Math.random(),service:customService,garmentId:customGarmentId,price:customBase,qty:q,gender:customGender,fabric:document.getElementById('cFabric').value||'Tela por confirmar con el taller',color:document.getElementById('cColor').value||'Por confirmar',style:document.getElementById('cStyle').value,notes:document.getElementById('cNotes').value||'Sin observaciones'});
   renderCart(); const f=document.getElementById('cartFloat'); f.classList.remove('cart-pulse'); void f.offsetWidth; f.classList.add('cart-pulse'); openCart();
 }
 function renderCart(){
   const b=document.getElementById('cartItems');
-  b.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><strong style="color:${i.gender==='male'?'#e4c85d':'#dce0e6'}">${i.service}</strong><div style="font-size:11px;color:#777;margin-top:5px">${i.fabric} · ${i.color} · ${i.style}<br>${i.notes}</div><div class="qty-control"><button onclick="changeQty(${i.id},-1)">−</button><span>${i.qty}</span><button onclick="changeQty(${i.id},1)">+</button><strong style="margin-left:auto;color:${i.gender==='male'?'#d4af37':'#d7dce2'}">Bs. ${(i.price*i.qty).toFixed(2)}</strong></div><button onclick="removeCart(${i.id})" style="margin-top:7px;background:none;border:0;color:#8e6060;font-size:11px">Eliminar</button></div>`).join(''):'<div style="padding:30px 0;color:#777">Tu carrito está vacío.</div>';
-  const u=cart.reduce((a,x)=>a+x.qty,0),t=cart.reduce((a,x)=>a+x.price*x.qty,0); document.getElementById('cartCount').textContent=u; document.getElementById('cartUnits').textContent=u; document.getElementById('cartSubtotal').textContent='Bs. '+t.toFixed(2); document.getElementById('cartTotal').textContent='Bs. '+t.toFixed(2);
+  b.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><strong style="color:${i.gender==='male'?'#e4c85d':'#dce0e6'}">${escapeHtml(i.service)}</strong><div style="font-size:11px;color:#777;margin-top:5px">${escapeHtml(i.fabric)} · ${escapeHtml(i.color)} · ${escapeHtml(i.style)}<br>${escapeHtml(i.notes)}</div><div class="qty-control"><button onclick="changeQty(${i.id},-1)">−</button><span>${i.qty}</span><button onclick="changeQty(${i.id},1)">+</button><strong style="margin-left:auto;color:${i.gender==='male'?'#d4af37':'#d7dce2'}">${i.price===null?'Por cotizar':'Bs. '+(i.price*i.qty).toFixed(2)}</strong></div><button onclick="removeCart(${i.id})" style="margin-top:7px;background:none;border:0;color:#8e6060;font-size:11px">Eliminar</button></div>`).join(''):'<div style="padding:30px 0;color:#777">Tu carrito está vacío.</div>';
+  const u=cart.reduce((a,x)=>a+x.qty,0),known=cart.every(x=>x.price!==null),t=cart.reduce((a,x)=>a+(x.price||0)*x.qty,0);
+  document.getElementById('cartCount').textContent=u; document.getElementById('cartUnits').textContent=u;
+  document.getElementById('cartSubtotal').textContent=known?'Bs. '+t.toFixed(2):'Por cotizar';
+  document.getElementById('cartTotal').textContent=known?'Bs. '+t.toFixed(2):'Por cotizar';
 }
 function changeQty(id,d){const i=cart.find(x=>x.id===id);if(i){i.qty=Math.max(1,i.qty+d);renderCart()}}
 function removeCart(id){const n=cart.findIndex(x=>x.id===id);if(n>-1)cart.splice(n,1);renderCart()}
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('drawerOverlay').classList.add('open')}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');if(!document.getElementById('drawerLeft').classList.contains('open')&&!document.getElementById('drawerRight').classList.contains('open'))document.getElementById('drawerOverlay').classList.remove('open')}
-function goToOrder(){closeCart();if(cart.length){document.getElementById('service').value=cart[0].service+'|'+cart[0].price;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
-function getPrice(service,fallback){return Number(localStorage.getItem('price_'+service))||Number(fallback)||0}
+function goToOrder(){closeCart();if(cart.length){const select=document.getElementById('service');const option=[...select.options].find(o=>o.value.split('|')[2]===cart[0].garmentId);if(option)select.value=option.value;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal();renderOrderFabricOptions()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
+function getPrice(service,fallback){return fallback===null||fallback===undefined?null:Number(fallback)}
 function savePrices(){if(!can("catalogo"))return alert("Tu cuenta no tiene permiso para editar el catálogo.");document.querySelectorAll('.admin-price').forEach(inp=>{const service=inp.dataset.service;const val=Math.max(0,Number(inp.value)||0);localStorage.setItem('price_'+service,val);document.querySelectorAll(`.product-card[data-service="${service}"] .price`).forEach(x=>x.textContent='Desde Bs. '+val.toLocaleString('es-BO'));document.querySelectorAll(`#service option[value^="${service}|"]`).forEach(o=>o.value=service+'|'+val);});alert('Precios actualizados en este navegador.')}
 
 function openDrawer(side){document.getElementById('drawerOverlay').classList.add('open');document.getElementById(side==='left'?'drawerLeft':'drawerRight').classList.add('open')}
@@ -104,36 +166,28 @@ function saveDelegatedAdmins(a){localStorage.setItem("orellana_admin_profiles",J
 function updateSessionUI(){const b=document.getElementById("sessionBadge");if(b){b.textContent=session.type==="admin"?(session.primary?"ADMINISTRADOR PRINCIPAL":session.owner?"PROPIETARIO":"ACCESO DELEGADO"):session.type==="user"?"CLIENTE":"SIN SESIÓN";b.classList.toggle("internal",session.type==="admin")}}
 function showLoginStatus(m,e=false){const x=document.getElementById("loginStatus");if(!x)return;x.textContent=m;x.classList.add("show");x.classList.toggle("error",e)}
 function identifyAccess(){
- const phone=document.getElementById("loginPhone").value.trim(), ci=document.getElementById("loginIdentity").value.trim(), name=document.getElementById("loginName").value.trim();
+ const phone=document.getElementById("loginPhone").value.trim();
+ const ci=document.getElementById("loginIdentity").value.trim();
+ const name=document.getElementById("loginName").value.trim();
  if(!/^[0-9+ -]{7,20}$/.test(phone)||ci.length<5||name.length<2){showLoginStatus("Completa teléfono, CI y nombre.",true);return}
- const profile=getDelegatedAdmins().find(a=>a.phone===phone&&normalize(a.ci)===normalize(ci)&&(normalize(a.name)===normalize(name)||normalize(a.user)===normalize(name)));
- const primary=phone===ADMIN.phone&&normalize(ci)===normalize(ADMIN.ci)&&(normalize(name)===normalize(ADMIN.user)||normalize(name)===normalize(ADMIN.name));
- if(primary||profile){
-   session.pendingAdmin=profile||{...ADMIN,role:"primary",permissions:["pedidos","pagos","catalogo","cuentas"]};
-   document.getElementById("accessStepBasic").classList.add("access-step-hidden");
-   document.getElementById("adminReveal").classList.add("show");
-   document.getElementById("adminPasswordStep").style.display="none";
-   document.getElementById("loginUser").value=""; document.getElementById("loginPassword").value="";
-   showLoginStatus("Perfil autorizado detectado. Introduce primero el nombre de usuario."); document.getElementById("loginUser").focus(); return;
- }
  session={type:"user",phone,ci,name,user:name,permissions:"cliente"};
- sessionStorage.setItem("orellana_session",JSON.stringify(session)); currentCI=ci; verified=true;
- document.getElementById("ci").value=ci; document.getElementById("phone").value=phone; document.getElementById("name").value=name;
- document.getElementById("rCI").textContent=ci; document.getElementById("rName").textContent=name;
- document.getElementById("ciStatus").textContent="Sesión de cliente iniciada."; document.getElementById("ciStatus").classList.add("show");
- document.getElementById("accessModal").classList.remove("open"); updateSessionUI(); document.getElementById("pedido").scrollIntoView({behavior:"smooth",block:"center"});
+ sessionStorage.setItem("orellana_session",JSON.stringify(session));
+ currentCI=ci;verified=true;
+ document.getElementById("ci").value=ci;
+ document.getElementById("phone").value=phone;
+ document.getElementById("name").value=name;
+ document.getElementById("rCI").textContent=ci;
+ document.getElementById("rName").textContent=name;
+ document.getElementById("ciStatus").textContent="Datos de contacto registrados.";
+ document.getElementById("ciStatus").classList.add("show");
+ document.getElementById("accessModal").classList.remove("open");
+ updateSessionUI();
+ document.getElementById("pedido").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function continueAdminAccess(){
- const p=session.pendingAdmin,u=document.getElementById("loginUser").value.trim(),pw=document.getElementById("loginPassword").value;if(!p)return;
- if(document.getElementById("adminPasswordStep").style.display==="none"){
-   if(normalize(u)!==normalize(p.user)){showLoginStatus("El nombre de usuario no coincide.",true);return}
-   document.getElementById("adminPasswordStep").style.display="block";document.getElementById("loginPassword").focus();showLoginStatus("Usuario confirmado. Introduce la contraseña.");return;
- }
- const expectedPassword=p.primary?(localStorage.getItem("orellana_primary_password")||p.password):p.password;
- if(pw!==expectedPassword){showLoginStatus("La contraseña no coincide.",true);return}
- session={type:"admin",phone:p.phone,ci:p.ci,user:p.user,name:p.name,permissions:p.permissions,primary:!!p.primary,owner:p.role==="owner"};
- sessionStorage.setItem("orellana_session",JSON.stringify(session));document.getElementById("accessModal").classList.remove("open");updateSessionUI();loadAdminPrices();renderAdminOrders();renderDelegatedAdmins();applyAdminPermissions();document.getElementById("adminModal").classList.add("open");
+ window.location.href="admin.html";
 }
+
 function permissionList(profile){
  const p=profile&&profile.permissions;
  if(Array.isArray(p))return p;
@@ -209,11 +263,11 @@ function updateTotal(){
   if(!select||!qtyInput)return;
   const parts=(select.value||'').split('|');
   const name=parts[0]||'—';
-  const price=Number(parts[1])||0;
+  const price=parts[1]===undefined||parts[1]===''?null:Number(parts[1]);
   const qty=Math.max(1,Number(qtyInput.value)||1);
-  const total=price*qty;
+  const total=price===null?null:price*qty;
   const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
-  setText('rService',name); setText('rQty',qty); setText('rPrice','Bs. '+price.toFixed(2)); setText('rTotal','Bs. '+total.toFixed(2));
+  setText('rService',name); setText('rQty',qty); setText('rPrice',price===null?'Por cotizar':'Bs. '+price.toFixed(2)); setText('rTotal',total===null?'Por cotizar':'Bs. '+total.toFixed(2));
 }
 function choosePay(el,method){selectedPay=method;const s=document.getElementById('payStatus');if(s){s.textContent='Método seleccionado: '+method+'. El pago debe ser verificado manualmente por el propietario.';s.classList.add('show')}}
 
@@ -228,15 +282,14 @@ function changeClientPassword(){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function toggleMeasurementRequest(){
- const unknown=!!document.getElementById('unknownMeasurements')?.checked;
  const qr=document.getElementById('qrOfficialBox');
  const notice=document.getElementById('requestContactNotice');
  const status=document.getElementById('payStatus');
  const paymentLink=document.getElementById('summaryPaymentLink');
- if(qr)qr.hidden=unknown;
- if(notice)notice.hidden=!unknown;
- if(paymentLink)paymentLink.hidden=unknown;
- if(status){status.textContent=unknown?'Solicitud de medidas: no se requiere pago por adelantado. Contacta con los propietarios para coordinar las medidas.':'Método seleccionado: QR. Estado del pago: pendiente de verificación por el propietario.';status.classList.add('show');}
+ if(qr)qr.hidden=true;
+ if(notice)notice.hidden=false;
+ if(paymentLink)paymentLink.hidden=true;
+ if(status){status.textContent='No se solicita adelanto por defecto. Para coordinar medidas, telas y pagos, contacta directamente con CONFECCIONES ORELLANA.';status.classList.add('show');}
 }
 function resetOrder(){document.getElementById('orderForm').reset();const refPreview=document.getElementById('referencePreview');if(refPreview){refPreview.removeAttribute('src');refPreview.hidden=true;}document.getElementById('ciStatus').classList.remove('show');document.getElementById('rName').textContent='No identificado';document.getElementById('rCI').textContent='—';verified=false;currentCI='';toggleMeasurementRequest();updateTotal()}
 
@@ -302,7 +355,26 @@ function populateFabricSelect(selectId, garment){
  options.forEach(f=>{const o=document.createElement('option');o.value=f.name;o.textContent=f.name;select.appendChild(o)});
  if(options.some(f=>f.name===previous))select.value=previous;
 }
-function renderOrderFabricOptions(){const service=document.getElementById('service');if(service)populateFabricSelect('fabric',(service.value||'').split('|')[0]);}
+async function renderOrderFabricOptions(){
+  const service=document.getElementById('service');
+  if(!service)return;
+  const parts=(service.value||'').split('|');
+  const garmentId=parts[2];
+  const select=document.getElementById('fabric');
+  if(!window.ORELLANA_SUPABASE){
+    if(select)select.innerHTML='<option value="">Conecta la base de datos para ver las telas</option>';
+    return;
+  }
+  if(garmentId && window.OrellanaCatalogService && select){
+    try{
+      const fabrics=await window.OrellanaCatalogService.listGarmentFabrics(garmentId);
+      select.innerHTML='<option value="">Selecciona una tela compatible</option>'+fabrics.map(f=>'<option value="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+(f.price_per_meter===null?' · cotizar':' · Bs. '+Number(f.price_per_meter).toFixed(2)+'/m')+'</option>').join('');
+      if(!fabrics.length)select.innerHTML='<option value="">Tela por confirmar con el taller</option>';
+      return;
+    }catch(error){console.warn('[ORELLANA] No se pudieron cargar las telas:',error)}
+  }
+  populateFabricSelect('fabric',parts[0]);
+}
 function loadTariffManager(){renderTariffRows();renderFabricRows()}
 function renderTariffRows(){const el=document.getElementById('tariffRows');if(!el)return;el.innerHTML=getTariffs().map((t,i)=>`<tr><td><input aria-label="Prenda ${i+1}" data-field="garment" value="${escapeHtml(t.garment||'')}" placeholder="Tipo de prenda"></td><td><input aria-label="Modelo ${i+1}" data-field="model" value="${escapeHtml(t.model||'')}" placeholder="Modelo o tela"></td><td><input aria-label="Precio de costura ${i+1}" data-field="price" type="number" min="0" step="1" value="${t.price===null||t.price===undefined?'':escapeHtml(t.price)}" placeholder="Pendiente"></td><td><input aria-label="Notas de tarifa ${i+1}" data-field="notes" value="${escapeHtml(t.notes||'')}" placeholder="Notas / pendiente de confirmar"></td><td><button class="mini" onclick="removeTariffRow(${i})">Quitar</button></td></tr>`).join('')}
 function renderFabricRows(){const el=document.getElementById('fabricRows');if(!el)return;el.innerHTML=getFabrics().map((f,i)=>`<tr><td><input aria-label="Nombre de tela ${i+1}" data-field="name" value="${escapeHtml(f.name||'')}" placeholder="Nombre de la tela"></td><td><input aria-label="Precio por metro ${i+1}" data-field="price" type="number" min="0" step="0.5" value="${f.price===null||f.price===undefined?'':escapeHtml(f.price)}" placeholder="Pendiente"></td><td><input aria-label="Prendas compatibles ${i+1}" data-field="compatible" value="${escapeHtml(f.compatible||'')}" placeholder="Prendas compatibles, separadas por comas"></td><td><button class="mini" onclick="removeFabricRow(${i})">Quitar</button></td></tr>`).join('')}
@@ -379,10 +451,9 @@ function initializeApp(){
   try {
     const saved = JSON.parse(sessionStorage.getItem('orellana_session') || 'null');
     // Sesión
-    if (saved && saved.type === 'admin' && saved.primary && normalize(saved.user) !== normalize(ADMIN.user)) {
+    if (saved && saved.type === 'admin') {
       sessionStorage.removeItem('orellana_session');
-      document.getElementById('accessModal')?.classList.add('open');
-      updateSessionUI();
+      window.location.href = 'admin.html';
       return;
     }
     if (saved && saved.type) {
@@ -432,50 +503,55 @@ function initializeApp(){
   renderCart();
   updateTotal();
   renderOrderFabricOptions();
-  document.getElementById('service')?.addEventListener('change',renderOrderFabricOptions);
+  document.getElementById('service')?.addEventListener('change',()=>{updateTotal();renderOrderFabricOptions()});
   toggleMeasurementRequest();
   setupImageUploads();
+  loadDynamicCatalog();
 }
 
-function submitOrder(e){
+async function submitOrder(e){
   e.preventDefault();
-  if (!verified) {
-    alert('Primero debe verificarse el Carnet de Identidad.');
-    document.getElementById('ci')?.focus();
-    return;
-  }
+  if (!verified) { alert('Primero debe verificarse el Carnet de Identidad.'); document.getElementById('ci')?.focus(); return; }
   const name = document.getElementById('name')?.value.trim() || '';
+  const phone = document.getElementById('phone')?.value.trim() || '';
   if (!name) { alert('Ingrese el nombre completo.'); return; }
+  if (!phone) { alert('Ingrese un teléfono de contacto.'); return; }
   const serviceParts = (document.getElementById('service')?.value || '').split('|');
   const service = serviceParts[0] || 'Servicio por confirmar';
-  const total = document.getElementById('rTotal')?.textContent || 'Bs. 0.00';
+  const totalText = document.getElementById('rTotal')?.textContent || '';
+  const cartHasUnknownPrice = cart.some(item => item.price === null);
+  const cartTotal = cart.reduce((sum,item) => sum + (item.price || 0) * item.qty, 0);
+  const parsedTotal = Number(totalText.replace(/[^0-9,.-]/g, '').replace(/\.(?=.*\.)/g, '').replace(',', '.'));
+  const quotedTotal = cart.length ? (cartHasUnknownPrice ? null : cartTotal) : (totalText.includes('cotizar') || !Number.isFinite(parsedTotal) || parsedTotal <= 0 ? null : parsedTotal);
   const order = {
-    id: 'ORD-' + Date.now().toString().slice(-7),
-    date: new Date().toLocaleString('es-BO'),
-    name,
-    ci: currentCI,
-    phone: document.getElementById('phone')?.value || '',
-    service,
-    total,
+    name, phone, service,
+    quotedTotal: Number.isFinite(quotedTotal) ? quotedTotal : null,
     requestType: document.getElementById('unknownMeasurements')?.checked ? 'Solicitud de medidas' : 'Pedido normal',
     measurementsUnknown: !!document.getElementById('unknownMeasurements')?.checked,
     measurements: document.getElementById('measurements')?.value || '',
     fabric: document.getElementById('fabric')?.value || 'Por confirmar',
     color: document.getElementById('color')?.value || '',
     details: document.getElementById('details')?.value || '',
-    payment: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : (selectedPay || 'QR'),
-    paymentStatus: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : 'Pendiente de verificación',
-    status: document.getElementById('unknownMeasurements')?.checked ? 'Solicitud de medidas' : 'Pedido recibido',
-    items: cart.length ? JSON.parse(JSON.stringify(cart)) : [],
-    referenceImage: (()=>{const image=document.getElementById('referencePreview');return image && !image.hidden && image.hasAttribute('src') ? image.src : '';})()
+    payment: document.getElementById('unknownMeasurements')?.checked ? 'Sin adelanto solicitado' : 'Sin adelanto obligatorio',
+    paymentStatus: 'Pendiente de revisión por el taller',
+    items: cart.map(item => ({...item})),
+    referenceImage: ''
   };
-  const orders = readLocalArray('orellana_orders');
-  orders.unshift(order);
-  localStorage.setItem('orellana_orders', JSON.stringify(orders));
-  const modalText = document.getElementById('modalText');
-  if (modalText) modalText.textContent = order.requestType === 'Solicitud de medidas' ? 'Solicitud ' + order.id + ' registrada. No se solicitó adelanto ni se requiere QR. Contacta con los propietarios para coordinar tus medidas.' : 'Pedido ' + order.id + ' recibido. Cliente: ' + name + ' | Total referencial: ' + order.total;
-  document.getElementById('modal')?.classList.add('open');
-  renderAdminOrders();
+  const submitButton = document.querySelector('#orderForm button[type="submit"]');
+  if (submitButton) { submitButton.disabled = true; submitButton.dataset.originalText = submitButton.textContent; submitButton.textContent = 'ENVIANDO…'; }
+  try {
+    const orderId = await window.OrellanaOrderService.submit(order);
+    const modalText = document.getElementById('modalText');
+    if (modalText) modalText.textContent = order.measurementsUnknown
+      ? 'Solicitud registrada correctamente. Código: ' + orderId + '. No se solicitó adelanto ni se requiere QR. Contacta con CONFECCIONES ORELLANA para coordinar tus medidas.'
+      : 'Pedido recibido correctamente. Código: ' + orderId + '. El total es referencial y el taller confirmará los detalles.';
+    document.getElementById('modal')?.classList.add('open');
+  } catch (error) {
+    console.error('[ORELLANA] No se pudo enviar el pedido:', error);
+    alert('No se pudo registrar el pedido. Comprueba tu conexión o inténtalo nuevamente. Detalle: ' + (error?.message || 'Error desconocido'));
+  } finally {
+    if (submitButton) { submitButton.disabled = false; submitButton.textContent = submitButton.dataset.originalText || 'ENVIAR PEDIDO'; }
+  }
 }
 
 function readLocalArray(key){

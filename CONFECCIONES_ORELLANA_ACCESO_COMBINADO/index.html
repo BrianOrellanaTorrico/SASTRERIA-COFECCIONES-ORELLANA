@@ -449,18 +449,18 @@
         <p>Escanea el QR oficial de CONFECCIONES ORELLANA desde tu aplicación bancaria. El pago será verificado manualmente por el propietario.</p>
     </div>
     <div class="panel payment-panel">
-        <div id="requestContactNotice" class="request-contact-notice" hidden>
+        <div id="requestContactNotice" class="request-contact-notice">
             <h3>Solicitud de medidas</h3>
             <p>Tu solicitud puede registrarse sin pago por adelantado. Comunícate con los propietarios para coordinar las medidas y los detalles de tu prenda.</p>
             <a class="btn" href="#contacto">CONTACTAR CON CONFECCIONES ORELLANA</a>
         </div>
-        <div class="qr-placeholder" id="qrOfficialBox">
+        <div class="qr-placeholder" id="qrOfficialBox" hidden>
             <div id="qrImageContent"><div class="qr-symbol" aria-hidden="true">▦</div>
             <h3>QR BANCARIO OFICIAL</h3>
             <p>El administrador puede cargar aquí la imagen auténtica del QR desde su ordenador.</p></div>
             <small>No realices pagos usando un código de demostración.</small>
         </div>
-        <div id="payStatus" class="status show">Método seleccionado: QR. Estado del pago: pendiente de verificación por el propietario.</div>
+        <div id="payStatus" class="status show">No se solicita adelanto por defecto. Contacta directamente con CONFECCIONES ORELLANA para coordinar los detalles.</div>
     </div>
 </section>
 
@@ -595,7 +595,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/core/supabase-client.js"></script>
 <script src="assets/js/services/catalog-service.js"></script>
-<script src="assets/js/admin-config.js"></script>
+<script src="assets/js/services/order-service.js"></script>
+
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
