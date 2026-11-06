@@ -73,15 +73,15 @@ create or replace function public.is_owner()
 returns boolean
 language sql stable security definer
 set search_path = public, auth
-as $
+as $$
   select exists (select 1 from public.profiles where id = auth.uid() and role = 'owner');
-$;
+$$;
 
 create or replace function public.handle_new_auth_user()
 returns trigger
 language plpgsql security definer
 set search_path = public
-as $
+as $$
 begin
   insert into public.profiles(id, display_name, phone)
   values (
@@ -92,7 +92,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists on_auth_user_created_profile on auth.users;
 create trigger on_auth_user_created_profile
@@ -158,7 +158,7 @@ returns void
 language plpgsql
 security definer
 set search_path = public, auth
-as $
+as $$
 begin
   if not public.has_permission('pagos') then
     raise exception 'No tienes permiso para verificar pagos.';
@@ -171,7 +171,7 @@ begin
   where id = p_order_id;
   if not found then raise exception 'Pedido no encontrado.'; end if;
 end;
-$;
+$$;
 revoke all on function public.set_order_payment_status(uuid,text) from public;
 grant execute on function public.set_order_payment_status(uuid,text) to authenticated;
 
