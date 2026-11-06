@@ -182,6 +182,13 @@ alter table public.garment_fabrics enable row level security;
 alter table public.garment_images enable row level security;
 alter table public.orders enable row level security;
 
+-- Permisos SQL base para la API; RLS decide qué filas y operaciones están permitidas.
+grant select on public.garments, public.fabrics, public.garment_fabrics, public.garment_images to anon, authenticated;
+grant insert, update, delete on public.garments, public.fabrics, public.garment_fabrics, public.garment_images to authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, update on public.orders to authenticated;
+
+
 create policy profiles_read_self_or_owner on public.profiles
 for select to authenticated using (id = auth.uid() or public.has_permission('cuentas'));
 
