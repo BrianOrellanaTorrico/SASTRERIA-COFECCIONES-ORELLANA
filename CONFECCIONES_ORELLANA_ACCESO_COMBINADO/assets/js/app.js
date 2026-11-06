@@ -57,7 +57,7 @@ function filterCatalog(g,b){
 async function loadCloudCatalog(){
   if(!window.ORELLANA_SUPABASE||!window.OrellanaCatalogService)return;
   try{
-    const [garments,fabrics,links]=await Promise.all([window.OrellanaCatalogService.listGarments(),window.OrellANA_CatalogService?window.OrellANA_CatalogService.listFabrics():window.OrellanaCatalogService.listFabrics(),window.OrellanaCatalogService.listCompatibility()]);
+    const [garments,fabrics,links]=await Promise.all([window.OrellanaCatalogService.listGarments(),window.OrellanaCatalogService.listFabrics(),window.OrellanaCatalogService.listCompatibility()]);
     const activeGarments=garments.filter(g=>['femenina','masculina'].includes(String(g.category||'').toLowerCase()));
     if(activeGarments.length){
       const grid=document.querySelector('#catalogo .grid');
