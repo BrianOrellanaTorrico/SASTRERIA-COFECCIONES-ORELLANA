@@ -43,12 +43,14 @@ CONFECCIONES_ORELLANA/
 
 1. Crea un proyecto en Supabase.
 2. Abre **SQL Editor** y ejecuta `supabase/schema.sql`.
-3. En el proyecto, copia la URL y la clave pública `anon`/publishable.
-4. Copia `assets/js/config.example.js` como `assets/js/config.js`.
-5. Completa `supabaseUrl` y `supabaseAnonKey` en `config.js`.
-6. No subas `config.js` al repositorio; está excluido por `.gitignore`.
+3. En **Project Settings → API** (o **Connect**) copia la URL del proyecto y la clave pública `anon`/publishable.
+4. En Netlify abre **Site configuration → Environment variables** y agrega:
+   - `SUPABASE_URL`: URL del proyecto.
+   - `SUPABASE_ANON_KEY`: clave pública anon/publishable.
+5. En Netlify configura **Base directory** como `CONFECCIONES_ORELLANA_ACCESO_COMBINADO`. El comando de compilación es `npm run build` y el directorio de publicación es `.`.
+6. Vuelve a desplegar. El proceso genera automáticamente `assets/js/config.js`; ese archivo está excluido del repositorio.
 
-La clave pública puede utilizarse en el navegador únicamente junto con políticas RLS correctamente configuradas. Nunca incluyas `service_role`, claves secretas ni contraseñas en archivos del frontend.
+La clave pública anon/publishable está diseñada para usarse en el navegador junto con RLS. Nunca incluyas `service_role`, claves `sb_secret` ni contraseñas en archivos del frontend.
 
 ## Estado de integración
 
@@ -67,7 +69,7 @@ El esquema contempla los roles `owner`, `admin` y `client`. La primera cuenta pr
 3. Usa la raíz del repositorio como directorio de publicación; no se requiere compilación para este sitio estático.
 4. Cada commit nuevo en la rama publicada puede iniciar una nueva implementación en Netlify.
 
-GitHub guarda el código; Supabase guarda los datos y archivos; Netlify publica el sitio.
+GitHub guarda el código y los cambios SQL; Supabase guarda los datos y archivos; Netlify genera la configuración pública desde variables de entorno y publica el sitio.
 
 ## Imágenes
 
@@ -92,3 +94,8 @@ Las imágenes fijas se colocan en `assets/img/` y se referencian desde HTML medi
 - Ambas pantallas comparten la identidad visual negra, dorada y tipográfica del acceso de clientes.
 
 **Importante:** la verificación de tres datos que existe actualmente en `app.js` todavía depende de los perfiles locales del navegador. No es una autenticación segura ni sincronizada entre dispositivos. La validación definitiva de identidad y permisos deberá migrarse a Supabase antes de publicar el sitio. El acceso directo `admin.html` tampoco debe considerarse operativo hasta configurar Supabase y crear el perfil autorizado.
+
+
+## Solicitudes públicas de arreglos
+
+El formulario de arreglos registra solicitudes sin anticipo ni cotización. La política RLS `orders_public_repair_insert` permite a visitantes anónimos insertar únicamente filas con `service_type = 'arreglo'`, precio nulo, estado pendiente y pago no requerido. Los visitantes no reciben permisos para leer, actualizar ni borrar pedidos. Esta protección limita los campos aceptados, pero no sustituye un sistema anti-spam o CAPTCHA para un despliegue de alto tráfico.
