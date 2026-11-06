@@ -28,6 +28,12 @@ window.OrellanaCatalogService = {
     return data || [];
   },
 
+  async listCompatibility() {
+    const { data, error } = await this.client().from('garment_fabrics').select('garment_id,fabric_id');
+    if (error) throw error;
+    return data || [];
+  },
+
   async uploadCatalogImage(file, garmentId) {
     if (!file || !garmentId) throw new Error("Falta la imagen o la prenda.");
     if (!file.type.startsWith("image/")) throw new Error("El archivo debe ser una imagen.");
