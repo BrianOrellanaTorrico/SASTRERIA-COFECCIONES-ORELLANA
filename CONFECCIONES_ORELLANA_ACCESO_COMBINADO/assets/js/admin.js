@@ -1,6 +1,18 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const state = { user: null, profile: null, garments: [], fabrics: [], orders: [], compatibility: [] };
+  const can = permission => state.profile?.role === 'owner' || (state.profile?.role === 'admin' && (state.profile.permissions || []).includes(permission));
+  function applyPermissions(){
+    const rules = { pedidos: 'pedidos', catalogo: 'catalogo', materiales: 'catalogo' };
+    Object.entries(rules).forEach(([section, permission]) => {
+      const allowed = can(permission);
+      const node = $(section);
+      if (node) node.hidden = !allowed;
+      document.querySelectorAll('a[href="#' + section + '"],button[data-section="' + section + '"]').forEach(el => el.hidden = !allowed);
+    });
+    const summary = $('resumen');
+    if (summary) summary.hidden = !(can('pedidos') || can('catalogo') || can('cuentas'));
+  }
   const money = (v) => v === null || v === undefined || v === '' ? '—' : Number(v).toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2});
   const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const client = () => window.ORELLANA_SUPABASE;
@@ -15,19 +27,19 @@
   }
   async function authorize(user){
     state.user=user;
-    const {data:profile,error}=await client().from('profiles').select('id,display_name,role').eq('id',user.id).maybeSingle();
+    const {data:profile,error}=await client().from('profiles').select('id,display_name,role,permissions').eq('id',user.id).maybeSingle();
     if(error){message('loginMessage','No se pudo verificar el perfil: '+failText(error),true);show('loginView');return;}
     if(!profile || !['owner','admin'].includes(profile.role)){
       show('deniedView'); $('adminIdentity').textContent='Acceso no autorizado'; $('signOutBtn').hidden=false; return;
     }
-    state.profile=profile; $('adminIdentity').textContent=(profile.display_name||user.email)+' · '+profile.role.toUpperCase(); $('signOutBtn').hidden=false; show('dashboardView'); await refreshAll();
+    state.profile=profile; applyPermissions(); $('adminIdentity').textContent=(profile.display_name||user.email)+' · '+profile.role.toUpperCase(); $('signOutBtn').hidden=false; show('dashboardView'); await refreshAll();
   }
   async function signIn(event){event.preventDefault();message('loginMessage','Verificando cuenta…');
     try{const {data,error}=await client().auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await authorize(data.user)}catch(e){message('loginMessage',failText(e),true)}
   }
   async function signOut(){if(client()) await client().auth.signOut();state.user=null;state.profile=null;$('password').value='';$('adminIdentity').textContent='Sin sesión';$('signOutBtn').hidden=true;show('loginView')}
-  async function refreshAll(){await Promise.all([loadOrders(),loadGarments(),loadFabrics()]);updateStats()}
-  async function loadOrders(){const body=$('ordersBody');body.innerHTML='<tr><td colspan="6" class="empty">Cargando…</td></tr>';
+  async function refreshAll(){const tasks=[];if(can('pedidos'))tasks.push(loadOrders());if(can('catalogo'))tasks.push(loadGarments(),loadFabrics());await Promise.all(tasks);updateStats()}
+  async function loadOrders(){if(!can('pedidos'))return;const body=$('ordersBody');body.innerHTML='<tr><td colspan="6" class="empty">Cargando…</td></tr>';
     try{const {data,error}=await client().from('orders').select('id,customer_name,customer_phone,order_details,quoted_total,status,created_at').order('created_at',{ascending:false});if(error)throw error;state.orders=data||[];renderOrders()}
     catch(e){body.innerHTML=`<tr><td colspan="6" class="empty">${escapeHtml(failText(e))}</td></tr>`}
   }
