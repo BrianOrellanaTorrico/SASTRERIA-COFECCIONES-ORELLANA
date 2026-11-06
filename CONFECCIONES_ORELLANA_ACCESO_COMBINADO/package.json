@@ -1,0 +1,9 @@
+{
+  "name": "confecciones-orellana-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sitio estático de CONFECCIONES ORELLANA conectado a Supabase y publicado en Netlify",
+  "scripts": {
+    "build": "node scripts/generate-config.mjs"
+  }
+}
