@@ -104,36 +104,28 @@ function saveDelegatedAdmins(a){localStorage.setItem("orellana_admin_profiles",J
 function updateSessionUI(){const b=document.getElementById("sessionBadge");if(b){b.textContent=session.type==="admin"?(session.primary?"ADMINISTRADOR PRINCIPAL":session.owner?"PROPIETARIO":"ACCESO DELEGADO"):session.type==="user"?"CLIENTE":"SIN SESIÓN";b.classList.toggle("internal",session.type==="admin")}}
 function showLoginStatus(m,e=false){const x=document.getElementById("loginStatus");if(!x)return;x.textContent=m;x.classList.add("show");x.classList.toggle("error",e)}
 function identifyAccess(){
- const phone=document.getElementById("loginPhone").value.trim(), ci=document.getElementById("loginIdentity").value.trim(), name=document.getElementById("loginName").value.trim();
+ const phone=document.getElementById("loginPhone").value.trim();
+ const ci=document.getElementById("loginIdentity").value.trim();
+ const name=document.getElementById("loginName").value.trim();
  if(!/^[0-9+ -]{7,20}$/.test(phone)||ci.length<5||name.length<2){showLoginStatus("Completa teléfono, CI y nombre.",true);return}
- const profile=getDelegatedAdmins().find(a=>a.phone===phone&&normalize(a.ci)===normalize(ci)&&(normalize(a.name)===normalize(name)||normalize(a.user)===normalize(name)));
- const primary=phone===ADMIN.phone&&normalize(ci)===normalize(ADMIN.ci)&&(normalize(name)===normalize(ADMIN.user)||normalize(name)===normalize(ADMIN.name));
- if(primary||profile){
-   session.pendingAdmin=profile||{...ADMIN,role:"primary",permissions:["pedidos","pagos","catalogo","cuentas"]};
-   document.getElementById("accessStepBasic").classList.add("access-step-hidden");
-   document.getElementById("adminReveal").classList.add("show");
-   document.getElementById("adminPasswordStep").style.display="none";
-   document.getElementById("loginUser").value=""; document.getElementById("loginPassword").value="";
-   showLoginStatus("Perfil autorizado detectado. Introduce primero el nombre de usuario."); document.getElementById("loginUser").focus(); return;
- }
  session={type:"user",phone,ci,name,user:name,permissions:"cliente"};
- sessionStorage.setItem("orellana_session",JSON.stringify(session)); currentCI=ci; verified=true;
- document.getElementById("ci").value=ci; document.getElementById("phone").value=phone; document.getElementById("name").value=name;
- document.getElementById("rCI").textContent=ci; document.getElementById("rName").textContent=name;
- document.getElementById("ciStatus").textContent="Sesión de cliente iniciada."; document.getElementById("ciStatus").classList.add("show");
- document.getElementById("accessModal").classList.remove("open"); updateSessionUI(); document.getElementById("pedido").scrollIntoView({behavior:"smooth",block:"center"});
+ sessionStorage.setItem("orellana_session",JSON.stringify(session));
+ currentCI=ci;verified=true;
+ document.getElementById("ci").value=ci;
+ document.getElementById("phone").value=phone;
+ document.getElementById("name").value=name;
+ document.getElementById("rCI").textContent=ci;
+ document.getElementById("rName").textContent=name;
+ document.getElementById("ciStatus").textContent="Datos de contacto registrados.";
+ document.getElementById("ciStatus").classList.add("show");
+ document.getElementById("accessModal").classList.remove("open");
+ updateSessionUI();
+ document.getElementById("pedido").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function continueAdminAccess(){
- const p=session.pendingAdmin,u=document.getElementById("loginUser").value.trim(),pw=document.getElementById("loginPassword").value;if(!p)return;
- if(document.getElementById("adminPasswordStep").style.display==="none"){
-   if(normalize(u)!==normalize(p.user)){showLoginStatus("El nombre de usuario no coincide.",true);return}
-   document.getElementById("adminPasswordStep").style.display="block";document.getElementById("loginPassword").focus();showLoginStatus("Usuario confirmado. Introduce la contraseña.");return;
- }
- const expectedPassword=p.primary?(localStorage.getItem("orellana_primary_password")||p.password):p.password;
- if(pw!==expectedPassword){showLoginStatus("La contraseña no coincide.",true);return}
- session={type:"admin",phone:p.phone,ci:p.ci,user:p.user,name:p.name,permissions:p.permissions,primary:!!p.primary,owner:p.role==="owner"};
- sessionStorage.setItem("orellana_session",JSON.stringify(session));document.getElementById("accessModal").classList.remove("open");updateSessionUI();loadAdminPrices();renderAdminOrders();renderDelegatedAdmins();applyAdminPermissions();document.getElementById("adminModal").classList.add("open");
+ window.location.href="admin.html";
 }
+
 function permissionList(profile){
  const p=profile&&profile.permissions;
  if(Array.isArray(p))return p;
@@ -379,10 +371,9 @@ function initializeApp(){
   try {
     const saved = JSON.parse(sessionStorage.getItem('orellana_session') || 'null');
     // Sesión
-    if (saved && saved.type === 'admin' && saved.primary && normalize(saved.user) !== normalize(ADMIN.user)) {
+    if (saved && saved.type === 'admin') {
       sessionStorage.removeItem('orellana_session');
-      document.getElementById('accessModal')?.classList.add('open');
-      updateSessionUI();
+      window.location.href = 'admin.html';
       return;
     }
     if (saved && saved.type) {
