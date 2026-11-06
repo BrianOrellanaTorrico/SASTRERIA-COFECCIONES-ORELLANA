@@ -3,7 +3,7 @@
   const state = { user: null, profile: null, garments: [], fabrics: [], orders: [], compatibility: [] };
   const can = permission => state.profile?.role === 'owner' || (state.profile?.role === 'admin' && (state.profile.permissions || []).includes(permission));
   function applyPermissions(){
-    const rules = { catalogo: 'catalogo', materiales: 'catalogo' };
+    const rules = { pedidos: 'pedidos', catalogo: 'catalogo', materiales: 'catalogo' };
     Object.entries(rules).forEach(([section, permission]) => {
       const allowed = section === 'pedidos' ? (can('pedidos') || can('pagos')) : can(permission);
       const node = $(section);
@@ -40,7 +40,7 @@
   async function signOut(){if(client()) await client().auth.signOut();state.user=null;state.profile=null;$('password').value='';$('adminIdentity').textContent='Sin sesión';$('signOutBtn').hidden=true;show('loginView')}
   async function refreshAll(){const tasks=[];if(can('pedidos')||can('pagos'))tasks.push(loadOrders());if(can('catalogo'))tasks.push(loadGarments(),loadFabrics());await Promise.all(tasks);updateStats()}
   async function loadOrders(){if(!can('pedidos')&&!can('pagos'))return;const body=$('ordersBody');body.innerHTML='<tr><td colspan="7" class="empty">Cargando…</td></tr>';
-    try{const {data,error}=await client().from('orders').select('id,customer_name,customer_phone,order_details,quoted_total,status,created_at').order('created_at',{ascending:false});if(error)throw error;state.orders=data||[];renderOrders()}
+    try{const {data,error}=await client().from('orders').select('id,customer_name,customer_phone,order_details,quoted_total,status,payment_status,created_at').order('created_at',{ascending:false});if(error)throw error;state.orders=data||[];renderOrders()}
     catch(e){body.innerHTML=`<tr><td colspan="6" class="empty">${escapeHtml(failText(e))}</td></tr>`}
   }
   function renderOrders(){const body=$('ordersBody');if(!state.orders.length){body.innerHTML='<tr><td colspan="7" class="empty">Todavía no hay pedidos en Supabase.</td></tr>';return}
