@@ -75,7 +75,7 @@ async function loadDynamicCatalog(){
         const image=g.garment_images?.[0];
         const imageUrl=image?window.OrellanaCatalogService.publicImageUrl(image.storage_path):'';
         const priceLabel=g.sewing_price===null?'Cotización personalizada':'Desde Bs. '+Number(g.sewing_price).toLocaleString('es-BO');
-        card.innerHTML='<span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">'+(imageUrl?'<img loading="lazy" alt="'+escapeHtml(image.alt_text||g.name)+'" src="'+imageUrl+'">':'<div class="catalog-placeholder">CONFECCIONES<br>ORELLANA</div>')+'</div><h3>'+escapeHtml(g.name)+'</h3><p>'+escapeHtml(g.description||'Confección personalizada a medida.')+'</p><div class="price">'+priceLabel+'</div><button class="mini" type="button">PERSONALIZAR</button>';
+        card.innerHTML='<span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">'+(imageUrl?'<img loading="lazy" alt="'+escapeHtml(image.alt_text||g.name)+'" src="'+escapeHtml(imageUrl)+'">':'<div class="catalog-placeholder">CONFECCIONES<br>ORELLANA</div>')+'</div><h3>'+escapeHtml(g.name)+'</h3><p>'+escapeHtml(g.description||'Confección personalizada a medida.')+'</p><div class="price">'+priceLabel+'</div><button class="mini" type="button">PERSONALIZAR</button>';
         card.querySelector('button').addEventListener('click',()=>openCustomizer(g.name,g.sewing_price,gender,g.id));
         grid.appendChild(card);
       });
@@ -263,7 +263,7 @@ function updateTotal(){
   if(!select||!qtyInput)return;
   const parts=(select.value||'').split('|');
   const name=parts[0]||'—';
-  const price=parts[1]===''?null:Number(parts[1]);
+  const price=parts[1]===undefined||parts[1]===''?null:Number(parts[1]);
   const qty=Math.max(1,Number(qtyInput.value)||1);
   const total=price===null?null:price*qty;
   const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
