@@ -118,6 +118,8 @@ with check (
   and status = 'pendiente'
   and payment_status = 'no_requerido'
 );
+-- La política RLS anterior limita qué filas pueden insertar los visitantes.
+grant insert on public.orders to anon;
 
 create policy "orders_customer_read_own" on public.orders
 for select to authenticated
