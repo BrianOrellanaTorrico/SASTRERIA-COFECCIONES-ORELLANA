@@ -266,5 +266,7 @@ on conflict (name, category) do nothing;
 -- Las cuentas Auth nuevas reciben perfil client automáticamente. El propietario inicial se promueve manualmente.
 -- El primer propietario se crea manualmente tras registrar su cuenta en Auth.
 -- Sustituye el UUID por auth.users.id desde el panel seguro de Supabase:
--- insert into public.profiles(id, display_name, role, permissions)
--- values ('UUID-AQUI', 'Propietario', 'owner', array['pedidos','pagos','catalogo','cuentas']);
+-- update public.profiles
+-- set display_name = 'Propietario', role = 'owner',
+--     permissions = array['pedidos','pagos','catalogo','cuentas']
+-- where id = 'UUID-AQUI';
