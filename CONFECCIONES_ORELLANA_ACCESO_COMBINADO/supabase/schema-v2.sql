@@ -20,7 +20,7 @@ create table public.garments (
   name text not null,
   category text not null check (category in ('femenina','masculina','arreglos')),
   description text not null default '',
-  sewing_price numeric(12,2) not null default 0 check (sewing_price >= 0),
+  sewing_price numeric(12,2) check (sewing_price is null or sewing_price >= 0),
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -131,8 +131,15 @@ create policy profiles_read_self_or_owner on public.profiles
 for select to authenticated using (id = auth.uid() or public.has_permission('cuentas'));
 
 create policy profiles_owner_manage on public.profiles
-for all to authenticated using (public.has_permission('cuentas'))
-with check (public.has_permission('cuentas'));
+for all to authenticated
+using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'owner'))
+with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'owner'));
+
+-- Un administrador con permiso de cuentas puede registrar el perfil de una cuenta
+-- Auth ya creada, pero solo como administrador delegado; nunca puede crear propietarios.
+create policy profiles_admin_create_delegate on public.profiles
+for insert to authenticated
+with check (role = 'admin' and public.has_permission('cuentas'));
 
 create policy garments_public_read on public.garments
 for select to anon, authenticated using (active or public.has_permission('catalogo'));
@@ -181,6 +188,25 @@ for update to authenticated using (bucket_id = 'catalogo' and public.has_permiss
 with check (bucket_id = 'catalogo' and public.has_permission('catalogo'));
 create policy catalog_images_manager_delete on storage.objects
 for delete to authenticated using (bucket_id = 'catalogo' and public.has_permission('catalogo'));
+
+
+-- Catálogo inicial aprobado. Los precios quedan NULL hasta que el taller los confirme.
+insert into public.garments(name, category, description, sewing_price) values
+('Polleras','femenina','',null),
+('Vestidos de 15','femenina','',null),
+('Faldas','femenina','',null),
+('Vestidos maternos','femenina','',null),
+('Vestidos de novia','femenina','',null),
+('Vestidos de novia para cholitas','femenina','',null),
+('Pantalones','masculina','',null),
+('Sacos','masculina','',null),
+('Busos','arreglos','Servicio de arreglo',null),
+('Jeans','arreglos','Servicio de arreglo',null),
+('Chamarras','arreglos','Servicio de arreglo',null),
+('Camisas','arreglos','Servicio de arreglo',null),
+('Poleras','arreglos','Servicio de arreglo',null),
+('Pantalones','arreglos','Servicio de arreglo',null)
+on conflict (name, category) do nothing;
 
 -- El primer propietario se crea manualmente tras registrar su cuenta en Auth.
 -- Sustituye el UUID por auth.users.id desde el panel seguro de Supabase:
