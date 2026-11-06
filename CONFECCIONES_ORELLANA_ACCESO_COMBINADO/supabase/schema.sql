@@ -74,30 +74,40 @@ alter table public.garment_fabrics enable row level security;
 alter table public.garment_images enable row level security;
 alter table public.orders enable row level security;
 
+drop policy if exists "profiles_read_own_or_managers" on public.profiles;
 create policy "profiles_read_own_or_managers" on public.profiles
 for select to authenticated
 using (id = auth.uid() or public.is_catalog_manager());
 
+drop policy if exists "catalog_public_read_garments" on public.garments;
 create policy "catalog_public_read_garments" on public.garments
 for select to anon, authenticated using (active = true or public.is_catalog_manager());
+drop policy if exists "catalog_manager_write_garments" on public.garments;
 create policy "catalog_manager_write_garments" on public.garments
 for all to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
 
+drop policy if exists "catalog_public_read_fabrics" on public.fabrics;
 create policy "catalog_public_read_fabrics" on public.fabrics
 for select to anon, authenticated using (active = true or public.is_catalog_manager());
+drop policy if exists "catalog_manager_write_fabrics" on public.fabrics;
 create policy "catalog_manager_write_fabrics" on public.fabrics
 for all to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
 
+drop policy if exists "catalog_public_read_compatibility" on public.garment_fabrics;
 create policy "catalog_public_read_compatibility" on public.garment_fabrics
 for select to anon, authenticated using (true);
+drop policy if exists "catalog_manager_write_compatibility" on public.garment_fabrics;
 create policy "catalog_manager_write_compatibility" on public.garment_fabrics
 for all to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
 
+drop policy if exists "catalog_public_read_images" on public.garment_images;
 create policy "catalog_public_read_images" on public.garment_images
 for select to anon, authenticated using (true);
+drop policy if exists "catalog_manager_write_images" on public.garment_images;
 create policy "catalog_manager_write_images" on public.garment_images
 for all to authenticated using (public.is_catalog_manager()) with check (public.is_catalog_manager());
 
+drop policy if exists "orders_customer_insert" on public.orders;
 create policy "orders_customer_insert" on public.orders
 for insert to authenticated
 with check (customer_id = auth.uid());
@@ -130,9 +140,11 @@ with check (
 );
 grant insert on public.orders to anon;
 
+drop policy if exists "orders_customer_read_own" on public.orders;
 create policy "orders_customer_read_own" on public.orders
 for select to authenticated
 using (customer_id = auth.uid() or public.is_catalog_manager());
+drop policy if exists "orders_manager_update" on public.orders;
 create policy "orders_manager_update" on public.orders
 for update to authenticated
 using (public.is_catalog_manager()) with check (public.is_catalog_manager());
@@ -142,19 +154,23 @@ insert into storage.buckets (id, name, public)
 values ('catalogo', 'catalogo', true)
 on conflict (id) do update set public = true;
 
+drop policy if exists "catalog_images_public_read" on storage.objects;
 create policy "catalog_images_public_read" on storage.objects
 for select to anon, authenticated
 using (bucket_id = 'catalogo');
 
+drop policy if exists "catalog_images_manager_upload" on storage.objects;
 create policy "catalog_images_manager_upload" on storage.objects
 for insert to authenticated
 with check (bucket_id = 'catalogo' and public.is_catalog_manager());
 
+drop policy if exists "catalog_images_manager_update" on storage.objects;
 create policy "catalog_images_manager_update" on storage.objects
 for update to authenticated
 using (bucket_id = 'catalogo' and public.is_catalog_manager())
 with check (bucket_id = 'catalogo' and public.is_catalog_manager());
 
+drop policy if exists "catalog_images_manager_delete" on storage.objects;
 create policy "catalog_images_manager_delete" on storage.objects
 for delete to authenticated
 using (bucket_id = 'catalogo' and public.is_catalog_manager());
