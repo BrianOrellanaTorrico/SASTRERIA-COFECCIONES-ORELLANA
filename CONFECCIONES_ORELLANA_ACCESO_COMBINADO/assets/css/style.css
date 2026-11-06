@@ -456,3 +456,52 @@ header,main,footer{position:relative;z-index:1}
 .store-location-gallery img{display:block;width:100%;height:155px;object-fit:cover;transition:transform .35s ease}
 .store-location-gallery figure:hover img{transform:scale(1.045)}
 @media(max-width:600px){.store-location-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.store-location-gallery img{height:125px}}
+
+
+/* Ajuste compacto del apartado de pago QR */
+#pago .payment-panel{
+  width:min(100%,560px);
+  margin-inline:auto;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+  padding:16px;
+}
+#pago .qr-placeholder{
+  width:100%;
+  min-height:260px;
+  box-sizing:border-box;
+  padding:18px;
+  gap:9px;
+}
+#pago .qr-official-image{
+  width:min(100%,240px);
+  max-height:250px;
+}
+#pago #payStatus{
+  width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:10px 13px;
+  border-left-width:3px;
+  border-radius:4px;
+  font-size:12px;
+  line-height:1.45;
+  text-align:center;
+}
+#pago .request-contact-notice{
+  width:100%;
+  box-sizing:border-box;
+  padding:18px;
+  text-align:center;
+}
+#pago .request-contact-notice p{
+  max-width:440px;
+  margin:0 auto 13px;
+}
+@media(max-width:700px){
+  #pago .payment-panel{padding:12px;gap:9px}
+  #pago .qr-placeholder{min-height:230px;padding:14px}
+  #pago .qr-official-image{max-height:220px}
+}
