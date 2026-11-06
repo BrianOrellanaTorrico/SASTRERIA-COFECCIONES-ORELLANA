@@ -14,10 +14,11 @@
 
 ## Antes de probarlo
 1. Crear `assets/js/config.js` a partir de `config.example.js` y completar URL + clave pública anon/publishable.
-2. Ejecutar `supabase/schema.sql` en el SQL Editor del proyecto Supabase.
-3. Crear la cuenta del propietario en Supabase Auth.
-4. Insertar/actualizar el perfil con el mismo UUID de Auth y `role = 'owner'` desde un entorno seguro. No permitir que un usuario cambie su propio rol.
-5. Probar el acceso y las operaciones con una cuenta de prueba antes de cargar información real.
+2. Si ya existen las tablas V1 `categories`, `products`, `orders` y `profiles`, ejecutar `supabase/COMPATIBILITY_FROM_V1.sql`; si el proyecto está vacío, ejecutar `supabase/schema.sql`.
+3. Ejecutar `supabase/migrations/20261106_public_orders.sql` en ambos casos.
+4. Crear la cuenta del propietario en Supabase Auth.
+5. Insertar/actualizar el perfil con el mismo UUID de Auth y `role = 'owner'` desde un entorno seguro. No permitir que un usuario cambie su propio rol.
+6. Probar el acceso y las operaciones con una cuenta de prueba antes de cargar información real.
 
 ## Pendiente
 - Ejecutado en código: pedidos de confección y arreglos se envían a `public.orders`; LocalStorage conserva una copia de respaldo y evita fallos de cuota.
@@ -32,6 +33,6 @@
 - La tabla no permite a visitantes anónimos consultar o modificar pedidos.
 - Netlify genera `assets/js/config.js` durante el build a partir de `SUPABASE_URL` y `SUPABASE_ANON_KEY`; no se guarda la configuración del proyecto en Git.
 - Para desplegar, configurar la base de Netlify como `CONFECCIONES_ORELLANA_ACCESO_COMBINADO`, ejecutar `npm run build` y publicar `.`.
-- Pendiente de ejecución en el proyecto Supabase: aplicar `supabase/migrations/20261106_public_orders.sql` desde SQL Editor.
+- Pendiente de ejecución en el proyecto Supabase: aplicar primero `COMPATIBILITY_FROM_V1.sql` si se conservan las tablas V1 y luego `migrations/20261106_public_orders.sql` desde SQL Editor.
 - Pendiente de prueba de extremo a extremo: registrar un pedido de prueba, comprobarlo en `admin.html` y revisar actualización de pago/estado.
 - Los perfiles delegados por módulo todavía requieren políticas/roles específicos en Supabase; no se deben considerar terminados por el control visual del navegador.
