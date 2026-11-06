@@ -1,0 +1,601 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CONFECCIONES ORELLANA - Sastrería y confección personalizada">
+<title>CONFECCIONES ORELLANA | Sastrería y confección</title>
+
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+<div class="gold-line"></div>
+<div class="noise"></div>
+<!-- Fondo -->
+<div class="atelier-motion" aria-hidden="true">
+    <div class="measure-tape tape-one"><span>10&nbsp; 20&nbsp; 30&nbsp; 40&nbsp; 50&nbsp; 60&nbsp; 70&nbsp; 80&nbsp; 90&nbsp; 100&nbsp;</span></div>
+    <div class="measure-tape tape-two"><span>CM&nbsp; 10&nbsp; 20&nbsp; 30&nbsp; 40&nbsp; 50&nbsp; 60&nbsp; 70&nbsp; 80&nbsp; 90&nbsp;</span></div>
+    <div class="thread thread-gold"></div>
+    <div class="thread thread-silver"></div>
+    <div class="thread thread-cream"></div>
+    <div class="thread-spool spool-one"></div>
+    <div class="thread-spool spool-two"></div>
+</div>
+
+<!-- Traje 3D -->
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<filter id="shadow">
+    <feDropShadow dx="0" dy="14" stdDeviation="13" flood-color="#000" flood-opacity=".75"/>
+</filter>
+<linearGradient id="suitBlack" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#2b2b2b"/>
+    <stop offset=".42" stop-color="#080808"/>
+    <stop offset="1" stop-color="#202020"/>
+</linearGradient>
+<linearGradient id="goldMetal" x1="0" x2="1">
+    <stop offset="0" stop-color="#80661d"/>
+    <stop offset=".5" stop-color="#f2d675"/>
+    <stop offset="1" stop-color="#735a17"/>
+</linearGradient>
+</defs>
+</svg>
+
+<header>
+<nav class="nav">
+    <div class="logo"><span class="store-3d">CONFECCIONES ORELLANA</span><small>SASTRERÍA · ATELIER · CONFECCIÓN</small></div>
+    <div class="navlinks">
+        <a href="#inicio">INICIO</a>
+        <a href="#catalogo">CATÁLOGO</a>
+        <a href="#especificaciones">DETALLES</a>
+        <a href="#pedido">PEDIDO</a>
+        <a href="#pago">PAGO</a>
+        <a href="#contacto">CONTACTO</a>
+    </div>
+    <span id="sessionBadge" class="session-badge">SIN SESIÓN</span>
+    <button class="menu-btn" onclick="openDrawer('left')">☰ MENÚ</button>
+</nav>
+</header>
+
+<!-- Navegación -->
+<aside id="drawerLeft" class="drawer left">
+    <button class="drawer-close" onclick="closeDrawers()">×</button>
+    <h3>MENÚ PRINCIPAL</h3>
+    <a class="drawer-link" href="#inicio" onclick="closeDrawers()">Inicio</a>
+    <a class="drawer-link" href="#catalogo" onclick="closeDrawers()">Catálogo</a>
+    <a class="drawer-link" href="#especificaciones" onclick="closeDrawers()">Especificaciones</a>
+    <a class="drawer-link" href="#pedido" onclick="closeDrawers()">Realizar pedido</a>
+    <a class="drawer-link" href="#pago" onclick="closeDrawers()">Métodos de pago</a>
+    <a class="drawer-link" href="#contacto" onclick="closeDrawers()">Ubicación y redes</a>
+    <h3>ACCESOS</h3>
+    <button class="btn" onclick="openDrawer('right');closeDrawers()">ABRIR PEDIDO</button>
+    <a class="drawer-link admin-entry-link" href="admin.html">ACCESO ADMINISTRATIVO</a>
+</aside>
+
+<!-- Pedido lateral -->
+<aside id="drawerRight" class="drawer right">
+    <button class="drawer-close" onclick="closeDrawers()">×</button>
+    <h3>PEDIDO RÁPIDO</h3>
+    <p style="color:#888;font-size:13px">Selecciona un servicio para comenzar.</p>
+    <br>
+    <button class="drawer-link" onclick="quickOrder('Pantalón')">Pantalones</button>
+    <button class="drawer-link" onclick="quickOrder('Saco')">Sacos</button>
+    <button class="drawer-link" onclick="quickOrder('Pollera')">Polleras</button>
+    <button class="drawer-link" onclick="quickOrder('Vestido de 15 años')">Vestidos de 15 años</button>
+    <button class="drawer-link" onclick="quickOrder('Falda')">Faldas</button>
+    <button class="drawer-link" onclick="quickOrder('Vestido materno')">Vestidos maternos</button>
+    <button class="drawer-link" onclick="quickOrder('Vestido de novia')">Vestidos de novia</button>
+    <button class="drawer-link" onclick="quickOrder('Vestido de novia para cholitas')">Vestidos de novia para cholitas</button>
+</aside>
+<div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawers()"></div>
+
+<main>
+
+<!-- Portada -->
+<section class="hero" id="inicio">
+    <div class="garment-stage">
+        <div class="garment-glow"></div>
+        <div class="garment">
+            <!-- Modelo 3D -->
+            <svg class="suit-svg" viewBox="0 0 500 720" aria-label="Modelo 3D estilizado de traje">
+                <g filter="url(#shadow)">
+                    <ellipse cx="250" cy="695" rx="160" ry="22" fill="#000" opacity=".7"/>
+                    <path d="M178 102 L322 102 L355 184 L323 218 L177 218 L145 184 Z" fill="#101010"/>
+                    <path d="M173 108 L132 137 L72 278 L122 302 L176 205 Z" fill="url(#suitBlack)"/>
+                    <path d="M327 108 L368 137 L428 278 L378 302 L324 205 Z" fill="url(#suitBlack)"/>
+                    <path d="M174 103 L206 78 L250 132 L294 78 L326 103 L303 212 L197 212 Z" fill="url(#suitBlack)"/>
+                    <path d="M205 78 L250 132 L294 78 L272 168 L250 193 L228 168 Z" fill="#f4f2e9"/>
+                    <path d="M228 168 L250 193 L272 168 L265 310 L235 310 Z" fill="#080808"/>
+                    <path d="M195 212 L305 212 L333 405 L285 430 L250 392 L215 430 L167 405 Z" fill="url(#suitBlack)"/>
+                    <path d="M215 430 L250 392 L285 430 L275 660 L228 660 Z" fill="#0a0a0a"/>
+                    <path d="M215 430 L250 392 L228 660 L190 660 Z" fill="#181818"/>
+                    <path d="M285 430 L250 392 L275 660 L312 660 Z" fill="#141414"/>
+                    <path d="M205 212 L250 260 L295 212 L281 322 L250 347 L219 322 Z" fill="#151515"/>
+                    <circle cx="250" cy="281" r="5" fill="url(#goldMetal)"/>
+                    <circle cx="250" cy="311" r="5" fill="url(#goldMetal)"/>
+                    <path d="M205 212 L250 260 L295 212" fill="none" stroke="url(#goldMetal)" stroke-width="2" opacity=".55"/>
+                    <path d="M177 205 L145 184 M323 205 L355 184" stroke="url(#goldMetal)" stroke-width="2" opacity=".5"/>
+                    <path d="M190 660 L228 660 L225 688 L177 688 Z" fill="#090909"/>
+                    <path d="M275 660 L312 660 L323 688 L275 688 Z" fill="#090909"/>
+                </g>
+            </svg>
+        </div>
+        <div class="floor-ring"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="eyebrow">DISEÑO · MEDIDA · CONFECCIÓN</div>
+        <h1>VISTE<br>LA <span>IDEA.</span></h1>
+        <p>
+            CONFECCIONES ORELLANA reúne catálogo, pedidos, especificaciones,
+            precios, pagos y contacto en una experiencia digital elegante.
+        </p>
+        <div class="actions">
+            <a class="btn" href="#catalogo">VER CATÁLOGO</a>
+            <button class="btn outline" onclick="openDrawer('right')">PEDIDO RÁPIDO</button>
+        </div>
+    </div>
+</section>
+
+<!-- Catálogo -->
+<section id="catalogo">
+    <div class="head">
+        <div class="eyebrow">COLECCIÓN</div>
+        <h2>Catálogo de confección</h2>
+        <p>Imágenes de referencia y precios base. Elige una prenda y personaliza sus detalles antes de añadirla al pedido.</p>
+    </div>
+    <div class="catalog-toolbar"><strong style="color:#ddd">Colección <span style="color:#666;font-size:12px">· filtra por tipo de colección</span></strong><div class="gender-tabs"><button class="gender-tab active" onclick="filterCatalog('all',this)">Todos</button><button class="gender-tab" onclick="filterCatalog('male',this)">Varón</button><button class="gender-tab" onclick="filterCatalog('female',this)">Mujer</button></div></div>
+
+    <div class="grid">
+
+        <article class="card product-card male-card" data-gender="male" data-service="Pantalón" data-price="250"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://michaeljondral.com/cdn/shop/files/michael_jondral_2026-9749.jpg?v=1773319764&amp;width=1066" alt="Imagen referencial: Pantalones" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://michaeljondral.com/en-hu/collections/rota" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Pantalones</h3><p>Prendas masculinas confeccionadas a medida.</p>
+            <div class="price">Desde Bs. 250</div>
+            <button class="mini" onclick="openCustomizer('Pantalón',250,'male')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card male-card" data-gender="male" data-service="Saco" data-price="500"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://cdn.media.amplience.net/i/frasersdev/52017902_o?%24h-ttl%24=&amp;fmt=auto&amp;h=767&amp;sm=scaleFit&amp;upscale=false&amp;w=767" alt="Imagen referencial: Sacos" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://ie.sportsdirect.com/pierre-cardin-rg-jkt-sn99-520179" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Sacos</h3><p>Sacos formales y personalizados.</p>
+            <div class="price">Desde Bs. 500</div>
+            <button class="mini" onclick="openCustomizer('Saco',500,'male')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Pollera" data-price="300"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://i.etsystatic.com/55026808/r/il/03bded/7290152815/il_794xN.7290152815_8a5g.jpg" alt="Imagen referencial: Polleras" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://www.etsy.com/listing/1853827322/pollera-de-cholita-boliviana-ropa" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Polleras</h3><p>Polleras tradicionales y personalizadas.</p>
+            <div class="price">Desde Bs. 300</div>
+            <button class="mini" onclick="openCustomizer('Pollera',300,'female')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Vestido de 15 años" data-price="900"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://dy9ihb9itgy3g.cloudfront.net/products/2303/pr21958/pr21958__f_d.2000.jpg" alt="Imagen referencial: Vestidos de 15 años" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://es.arianavara.com/princesa-vestidos-de-quinceanera/princesa/pr21958" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Vestidos de 15 años</h3><p>Diseños especiales para celebraciones.</p>
+            <div class="price">Desde Bs. 900</div>
+            <button class="mini" onclick="openCustomizer('Vestido de 15 años',900,'female')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Falda" data-price="180"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Pleatedskirt.jpg" alt="Imagen referencial: Faldas" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://commons.wikimedia.org/wiki/File:Pleatedskirt.jpg" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Faldas</h3><p>Faldas casuales y formales.</p>
+            <div class="price">Desde Bs. 180</div>
+            <button class="mini" onclick="openCustomizer('Falda',180,'female')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Vestido materno" data-price="700"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://image.rakuten.co.jp/tocohel/cabinet/compass1732895171.jpg" alt="Imagen referencial: Vestidos maternos" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://item.rakuten.co.jp/tocohel/compass1732895350/" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Vestidos maternos</h3><p>Diseños cómodos y personalizados para maternidad.</p>
+            <div class="price">Desde Bs. 700</div>
+            <button class="mini" onclick="openCustomizer('Vestido materno',700,'female')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Vestido de novia" data-price="1500"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://www.like-us.jp/studioblue/dress-photoprops/color/gallery/011.jpg" alt="Imagen referencial: Vestidos de novia" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://www.like-us.jp/studioblue/dress-photoprops/color/" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Vestidos de novia</h3><p>Confección personalizada para ceremonias.</p>
+            <div class="price">Desde Bs. 1,500</div>
+            <button class="mini" onclick="openCustomizer('Vestido de novia',1500,'female')">PERSONALIZAR</button>
+        </article>
+
+        <article class="card product-card female-card" data-gender="female" data-service="Vestido de novia para cholitas" data-price="1800"><span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">
+                <img src="https://www.urgente.bo/sites/default/files/cholita.novia__0.JPG" alt="Imagen referencial: Vestidos de novia para cholitas" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">
+            </div>
+            <a class="reference-source" href="https://www.urgente.bo/noticia/vuelve-como-tendencia-la-elegante-novia-de-pollera" target="_blank" rel="noopener noreferrer">Referencia</a>
+            <h3>Vestidos de novia para cholitas</h3><p>Diseños para bodas con estilo tradicional de cholita.</p>
+            <div class="price">Desde Bs. 1,800</div>
+            <button class="mini" onclick="openCustomizer('Vestido de novia para cholitas',1800,'female')">PERSONALIZAR</button>
+        </article>
+
+    </div>
+</section>
+
+<!-- Arreglos -->
+<section id="arreglo-prendas" class="repair-section">
+    <div class="head">
+        <div class="eyebrow">SERVICIO DE AJUSTE</div>
+        <h2>Arreglo de prendas</h2>
+        <p>Selecciona la prenda que necesitas arreglar. Este servicio está separado del catálogo de confección a medida.</p>
+    </div>
+    <div class="repair-panel">
+        <div class="repair-panel-intro">
+            <span class="repair-icon" aria-hidden="true">✂</span>
+            <div>
+                <h3>¿Qué deseas arreglar?</h3>
+                <p>Elige el tipo de prenda y describe brevemente el ajuste que necesitas.</p>
+            </div>
+        </div>
+        <div class="repair-form-grid">
+            <label class="repair-field" for="repairGarment">
+                <span>SELECCIONAR PRENDA</span>
+                <select id="repairGarment">
+                    <option value="">Selecciona una prenda…</option>
+                    <option>Busos</option>
+                    <option>Jeans</option>
+                    <option>Chamarras</option>
+                    <option>Camisas</option>
+                    <option>Poleras</option>
+                    <option>Pantalones</option>
+                </select>
+            </label>
+            <label class="repair-field" for="repairDetails">
+                <span>¿QUÉ ARREGLO NECESITAS?</span>
+                <textarea id="repairDetails" rows="3" placeholder="Ej.: ajustar el largo, cambiar cierre, estrechar cintura…"></textarea>
+            </label>
+        </div>
+        <p class="repair-price-note">Precio referencial desde Bs. 30. El costo final depende del tipo de arreglo y se confirmará con el taller.</p>
+        <button class="btn" type="button" onclick="startRepairOrder()">CONTINUAR CON EL ARREGLO</button>
+        <div id="repairStatus" class="repair-status" role="status" aria-live="polite"></div>
+    </div>
+</section>
+
+<!-- Paneles -->
+<section id="especificaciones">
+    <div class="head">
+        <div class="eyebrow">PERSONALIZACIÓN</div>
+        <h2>Paneles de especificaciones</h2>
+        <p>Secciones desplegables preparadas para convertirse en opciones dinámicas del sistema.</p>
+    </div>
+
+    <div class="accordion">
+        <details open>
+            <summary>Medidas del cliente</summary>
+            <div class="inside">Pecho, cintura, cadera, hombros, manga, largo y otras medidas según la prenda. En la versión con base de datos podrán guardarse dentro del perfil del cliente.</div>
+        </details>
+        <details>
+            <summary>Telas y materiales</summary>
+            <div class="inside">Tipo de tela, color, textura, forro, botones, cierres, bordados y otros materiales.</div>
+        </details>
+        <details>
+            <summary>Diseño</summary>
+            <div class="inside">Corte, cuello, mangas, bolsillos, cintura, largo, adornos y detalles personalizados.</div>
+        </details>
+        <details>
+            <summary>Imagen de referencia</summary>
+            <div class="inside">La versión final podrá permitir cargar fotografías desde el teléfono o computadora para adjuntarlas al pedido.</div>
+        </details>
+        <details>
+            <summary>Estado del pedido</summary>
+            <div class="inside">
+                <ul>
+                    <li>Pedido recibido</li>
+                    <li>Revisión de medidas</li>
+                    <li>Presupuesto confirmado</li>
+                    <li>En confección</li>
+                    <li>Listo para entrega</li>
+                    <li>Entregado</li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</section>
+
+<!-- Personalización -->
+<section id="personalizador"><div class="head"><div class="eyebrow">DISEÑO A MEDIDA</div><h2>¿Cómo quieres tu prenda?</h2><p>Personaliza los detalles y características de tu prenda.</p></div><div class="customizer"><h4 id="customTitle">Selecciona una prenda del catálogo</h4><p class="sub">Selecciona las características de tu diseño.</p><div class="option-grid"><div class="option-card"><strong>TELA DISPONIBLE PARA ESTA PRENDA</strong><select id="cFabric"><option value="">Primero selecciona una prenda</option></select></div><div class="option-card"><strong>COLOR</strong><input id="cColor" placeholder="Negro, azul, blanco..."></div><div class="option-card"><strong>CORTE / ESTILO</strong><select id="cStyle"><option>Clásico</option><option>Entallado</option><option>Recto</option><option>Moderno</option><option>Personalizado</option></select></div><div class="option-card"><strong>CANTIDAD</strong><input id="cQty" type="number" min="1" value="1" onchange="refreshCustomizerTotal()"></div><div class="option-card"><strong>MEDIDAS / OBSERVACIONES</strong><input id="cNotes" placeholder="Largo, cintura, detalles..."></div></div><div class="spec-price">Precio de esta configuración: <strong id="cPrice">Bs. 0.00</strong></div><button class="btn" onclick="addConfiguredProduct()">AÑADIR AL CARRITO</button> <button class="btn outline" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">VOLVER AL CATÁLOGO</button></div></section>
+
+<!-- Pedido -->
+<section class="order-zone" id="pedido">
+<div class="order-inner">
+    <div class="head">
+        <div class="eyebrow">PEDIDO</div>
+        <h2>Registrar encargo</h2>
+        <p>Identificación por CI antes de enviar el pedido. La autenticación real se conectará al backend.</p>
+    </div>
+
+    <div class="order-layout">
+
+        <div class="panel">
+
+            <div class="login">
+                <strong>IDENTIFICACIÓN DEL CLIENTE</strong>
+                <p class="sub">Carnet de Identidad (CI)</p>
+                <label for="ci">Número de CI</label>
+                <input id="ci" maxlength="15" inputmode="numeric" placeholder="Ingrese su CI">
+                <button class="btn" type="button" onclick="verifyCI()">VERIFICAR CI</button>
+                <div id="ciStatus" class="status"></div>
+            </div>
+
+            <form id="orderForm">
+                <div class="formgrid">
+
+                    <div>
+                        <label>Nombre completo</label>
+                        <input id="name" required placeholder="Nombre y apellidos">
+                    </div>
+
+                    <div>
+                        <label>Teléfono de contacto</label>
+                        <input id="phone" type="tel" placeholder="Número de contacto">
+                    </div>
+
+                    <div>
+                        <label>Servicio</label>
+                        <select id="service" onchange="updateTotal()">
+                            <option value="Pantalón|250">Pantalones</option>
+                            <option value="Saco|500">Sacos</option>
+                            <option value="Pollera|300">Polleras</option>
+                            <option value="Vestido de 15 años|900">Vestidos de 15 años</option>
+                            <option value="Falda|180">Faldas</option>
+                            <option value="Vestido materno|700">Vestidos maternos</option>
+                            <option value="Vestido de novia|1500">Vestidos de novia</option>
+                            <option value="Vestido de novia para cholitas|1800">Vestidos de novia para cholitas</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Cantidad</label>
+                        <input id="qty" type="number" min="1" value="1" onchange="updateTotal()">
+                    </div>
+
+                    <div>
+                        <label>Tela compatible con la prenda</label>
+                        <select id="fabric"><option value="">Selecciona primero la prenda</option></select>
+                        <p class="map-note">Las opciones se administran por tipo de prenda. Si la tela que buscas no aparece, indícalo en observaciones o consulta al taller.</p>
+                    </div>
+
+                    <div>
+                        <label>Color</label>
+                        <input id="color" placeholder="Ej.: Negro, blanco, azul...">
+                    </div>
+
+                    <div>
+                        <label>Fecha deseada</label>
+                        <input id="date" type="date">
+                    </div>
+
+                    <div>
+                        <label>Modalidad</label>
+                        <select id="mode">
+                            <option>Confección a medida</option>
+                            <option>Arreglo</option>
+                            <option>Diseño personalizado</option>
+                        </select>
+                    </div>
+
+                    <div class="full">
+                        <label>Medidas / observaciones</label>
+                        <textarea id="measurements" placeholder="Medidas y observaciones del cliente..."></textarea>
+                        <label class="measure-request-option" for="unknownMeasurements">
+                            <input id="unknownMeasurements" type="checkbox" onchange="toggleMeasurementRequest()">
+                            No conozco mis medidas; deseo coordinar la toma de medidas con los propietarios.
+                        </label>
+                        <p class="map-note">Al marcar esta opción, el pedido se registrará como solicitud. No se pedirá un adelanto y el QR permanecerá oculto.</p>
+                    </div>
+
+                    <div class="full">
+                        <label>Detalles del diseño</label>
+                        <textarea id="details" placeholder="Corte, bolsillos, mangas, adornos, referencia y otros detalles del diseño..."></textarea>
+                    </div>
+
+                    <div class="full">
+                        <label>Imagen de referencia (desde tu ordenador)</label>
+                        <input type="file" id="reference" accept="image/*">
+                        <p class="map-note">Puedes adjuntar una foto JPG, PNG, WEBP o GIF de hasta 1 MB.</p>
+                        <img id="referencePreview" class="upload-preview" alt="Vista previa de la referencia" hidden>
+                    </div>
+
+                    <div class="full">
+                        <button class="btn" type="submit">CONFIRMAR PEDIDO</button>
+                        <button class="btn outline" type="button" onclick="resetOrder()">LIMPIAR</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <aside class="panel summary">
+            <h3>RESUMEN DEL PEDIDO</h3>
+            <p class="sub">Actualización automática</p>
+
+            <div class="row"><span>Cliente</span><b id="rName">No identificado</b></div>
+            <div class="row"><span>CI</span><b id="rCI">—</b></div>
+            <div class="row"><span>Servicio</span><b id="rService">Pantalones</b></div>
+            <div class="row"><span>Cantidad</span><b id="rQty">1</b></div>
+            <div class="row"><span>Precio base</span><b id="rPrice">Bs. 250.00</b></div>
+
+            <div class="total"><span>TOTAL</span><span id="rTotal">Bs. 250.00</span></div>
+
+            <div class="note">
+                El monto mostrado es referencial. El precio final podrá ser
+                calculado por el sistema después de revisar materiales,
+                medidas y personalización.
+            </div>
+            <a class="btn" id="summaryPaymentLink" href="#pago">IR A PAGO</a>
+        </aside>
+
+    </div>
+</div>
+</section>
+
+<!-- Pago -->
+<section id="pago">
+    <div class="head">
+        <div class="eyebrow">PAGO</div>
+        <h2>Pago mediante QR</h2>
+        <p>Escanea el QR oficial de CONFECCIONES ORELLANA desde tu aplicación bancaria. El pago será verificado manualmente por el propietario.</p>
+    </div>
+    <div class="panel payment-panel">
+        <div id="requestContactNotice" class="request-contact-notice" hidden>
+            <h3>Solicitud de medidas</h3>
+            <p>Tu solicitud puede registrarse sin pago por adelantado. Comunícate con los propietarios para coordinar las medidas y los detalles de tu prenda.</p>
+            <a class="btn" href="#contacto">CONTACTAR CON CONFECCIONES ORELLANA</a>
+        </div>
+        <div class="qr-placeholder" id="qrOfficialBox">
+            <div id="qrImageContent"><div class="qr-symbol" aria-hidden="true">▦</div>
+            <h3>QR BANCARIO OFICIAL</h3>
+            <p>El administrador puede cargar aquí la imagen auténtica del QR desde su ordenador.</p></div>
+            <small>No realices pagos usando un código de demostración.</small>
+        </div>
+        <div id="payStatus" class="status show">Método seleccionado: QR. Estado del pago: pendiente de verificación por el propietario.</div>
+    </div>
+</section>
+
+<!-- Contacto -->
+<section id="contacto">
+    <div class="head">
+        <div class="eyebrow">CONTACTO</div>
+        <h2>Encuéntranos y contáctanos</h2>
+        <p>Consulta la ubicación de la tienda o comunícate directamente con sus propietarios.</p>
+    </div>
+    <div class="info-grid">
+        <div class="mapbox map-embed-panel">
+            <div class="map-heading">
+                <h3>UBICACIÓN DE LA SASTRERÍA</h3>
+                <p>Mapa interactivo integrado en esta página.</p>
+            </div>
+            <iframe class="embedded-map" title="Mapa de ubicación de CONFECCIONES ORELLANA"
+                src="https://maps.google.com/maps?q=CONFECCIONES%20ORELLANA&output=embed"
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            <a class="btn map-external-link" target="_blank" rel="noopener"
+               href="https://goo.gl/maps/1KyVvY3ZVWbn6QiV8?g_st=ac">ABRIR EN GOOGLE MAPS</a>
+            <p class="map-note">Nota: el marcador exacto deberá confirmarse al probar el mapa; el enlace original de ubicación se conserva como alternativa.</p>
+        </div>
+        <div class="panel">
+            <h3>CONTACTO DIRECTO</h3>
+            <p class="sub">TikTok y teléfonos de los propietarios.</p>
+            <div class="contact-owner-list">
+                <article class="contact-owner">
+                    <div class="contact-owner-copy"><span class="owner-label">PROPIETARIO</span><h4>Don Hernán Orellana Vásquez</h4><a class="contact-phone" href="tel:+59172298110">+591 72298110</a></div>
+                    <a class="btn contact-call" href="tel:+59172298110">LLAMAR</a>
+                </article>
+                <article class="contact-owner">
+                    <div class="contact-owner-copy"><span class="owner-label">PROPIETARIA</span><h4>Doña Melva Torrico Vidal</h4><a class="contact-phone" href="tel:+59168488423">+591 68488423</a></div>
+                    <a class="btn contact-call" href="tel:+59168488423">LLAMAR</a>
+                </article>
+            </div>
+            <div class="socials contact-socials">
+                <a target="_blank" rel="noopener" href="https://www.tiktok.com/@melvatorrico375">TikTok · @melvatorrico375 ↗</a>
+            </div>
+            <div class="about-site">
+                <h3>ACERCA DE ESTE SITIO</h3>
+                <p>Este sitio web de CONFECCIONES ORELLANA fue creado para facilitar la gestión de pedidos y acercar nuestros servicios a cada cliente mediante una herramienta práctica y accesible.</p>
+                <p>Nos comprometemos a trabajar con confianza y responsabilidad, cuidando la atención y los detalles de cada solicitud. Agradecemos sinceramente a nuestros clientes por utilizar esta herramienta y acompañarnos en la mejora de nuestro servicio.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="cuenta" style="max-width:1180px;margin:20px auto 60px;padding:0 18px"><div class="panel"><div class="eyebrow">MI CUENTA</div><h3>Cambiar contraseña</h3><p class="sub">Usa el teléfono de tu cuenta y la contraseña anterior para establecer una nueva.</p><div class="admin-login-grid"><input id="clientChangePhone" placeholder="Teléfono asociado"><input id="clientOldPassword" type="password" placeholder="Contraseña anterior"><input id="clientNewPassword" type="password" placeholder="Nueva contraseña"><input id="clientNewPassword2" type="password" placeholder="Repetir nueva contraseña"></div><button class="btn" onclick="changeClientPassword()">ACTUALIZAR CONTRASEÑA</button><div id="clientPasswordStatus" class="status"></div></div></section>
+
+</main>
+
+<footer>
+    <strong>CONFECCIONES ORELLANA</strong><br>
+    Sastrería · Confección · Arreglos · Diseño personalizado<br><br>
+    Sastrería · Confección · Arreglos · Diseño personalizado.
+</footer>
+
+<!-- Acceso -->
+<div class="modal access-modal" id="accessModal"><div class="modalbox access-box">
+<div class="access-mark">CO</div><div class="eyebrow">ACCESO</div><h3>Bienvenido a CONFECCIONES ORELLANA</h3>
+<p class="sub access-intro">Ingresa teléfono, CI y nombre. El sistema detectará automáticamente el perfil.</p>
+<div id="accessStepBasic"><div class="access-grid">
+<div><label>TELÉFONO</label><input id="loginPhone" type="tel" inputmode="numeric" placeholder="Número de teléfono"></div>
+<div><label>CARNET DE IDENTIDAD</label><input id="loginIdentity" maxlength="20" placeholder="Número de CI"></div>
+<div class="full"><label>NOMBRE COMPLETO O NOMBRE DE USUARIO</label><input id="loginName" placeholder="Nombre completo o usuario"></div>
+</div><button class="btn access-btn" onclick="identifyAccess()">CONTINUAR</button></div>
+<div id="adminReveal" class="admin-reveal"><div class="eyebrow">VERIFICACIÓN</div><p>Perfil autorizado detectado. Continúa con sus credenciales.</p>
+<label>NOMBRE DE USUARIO</label><input id="loginUser" autocomplete="username" placeholder="Nombre de usuario">
+<div id="adminPasswordStep" style="display:none"><label>CONTRASEÑA</label><input id="loginPassword" type="password" placeholder="Contraseña"></div>
+<button class="btn access-btn" onclick="continueAdminAccess()">CONTINUAR</button></div>
+<div id="loginStatus" class="status"></div></div></div>
+<!-- Administración -->
+<div class="modal admin-modal" id="adminModal">
+  <div class="modalbox">
+    <button class="close" onclick="closeAdmin()">×</button>
+    <div class="eyebrow">CENTRO PRIVADO</div><h3>Panel de trabajo</h3>
+    <p class="sub">Gestiona precios y encargos desde el área interna.</p>
+    <div class="admin-grid" style="margin-top:18px">
+      <div class="panel"><h3 style="font-size:18px">Precios del catálogo</h3><p class="sub">Los cambios se guardan en este navegador.</p><table class="admin-table"><thead><tr><th>Prenda</th><th>Precio Bs.</th></tr></thead><tbody id="adminPriceBody"></tbody></table><div class="admin-actions"><button class="btn" onclick="savePrices()">GUARDAR PRECIOS</button></div></div>
+      <div class="panel image-manager-panel" id="imageManagerPanel">
+        <h3 style="font-size:18px">Imágenes del sitio</h3>
+        <p class="sub">Selecciona imágenes desde tu ordenador. Se guardan en este navegador.</p>
+        <label for="catalogImageService">¿A qué tarjeta del catálogo corresponde?</label>
+        <select id="catalogImageService"><option value="Pantalón">Pantalones</option><option value="Saco">Sacos</option><option value="Pollera">Polleras</option><option value="Vestido de 15 años">Vestidos de 15 años</option><option value="Falda">Faldas</option><option value="Vestido materno">Vestidos maternos</option><option value="Vestido de novia">Vestidos de novia</option><option value="Vestido de novia para cholitas">Vestidos de novia para cholitas</option></select>
+        <label for="catalogImageFile" style="display:block;margin-top:12px">Imagen para el catálogo</label>
+        <input type="file" id="catalogImageFile" accept="image/*">
+        <img id="catalogImagePreview" class="upload-preview" alt="Vista previa de imagen del catálogo" hidden>
+        <div class="admin-actions"><button class="btn" onclick="saveCatalogImage()">GUARDAR IMAGEN DEL CATÁLOGO</button><button class="mini" onclick="removeCatalogImage()">QUITAR IMAGEN PERSONALIZADA</button></div>
+        <hr class="upload-divider">
+        <label for="qrImageFile">Imagen del QR bancario oficial</label>
+        <input type="file" id="qrImageFile" accept="image/*">
+        <img id="qrImagePreview" class="upload-preview qr-preview" alt="Vista previa del QR bancario" hidden>
+        <div class="admin-actions"><button class="btn" onclick="saveQrImage()">GUARDAR IMAGEN DEL QR</button><button class="mini" onclick="removeQrImage()">QUITAR QR PERSONALIZADO</button></div>
+        <p class="map-note">Usa solo el QR bancario auténtico de la tienda. No cargues un QR de prueba.</p>
+      </div>
+      <div class="panel"><h3 style="font-size:18px">Encargos recibidos</h3><p class="sub">Los encargos mostrados corresponden a este navegador.</p><div id="adminOrders"></div><div class="admin-actions"><button class="mini" onclick="clearOrders()">LIMPIAR ENCARGOS</button><button class="mini" onclick="adminLogout()">CERRAR SESIÓN</button></div></div>
+    </div>
+    <div class="panel" id="adminTariffManager" style="margin-top:16px">
+      <div class="eyebrow">CONFIGURACIÓN COMERCIAL</div><h3 style="font-size:20px">Tarifario administrativo</h3>
+      <p class="sub">Completa y ajusta las tarifas directamente desde el administrador. Los campos vacíos indican que falta confirmar el precio; no se mostrarán como una tarifa confirmada. Los cambios actuales se guardan en este navegador.</p>
+      <h4 style="margin:18px 0 8px">Costura por prenda y modelo</h4>
+      <div style="overflow-x:auto"><table class="admin-table tariff-table"><thead><tr><th>Prenda</th><th>Modelo / variante</th><th>Costura (Bs)</th><th>Estado / observaciones</th><th></th></tr></thead><tbody id="tariffRows"></tbody></table></div>
+      <div class="admin-actions"><button class="btn outline" onclick="addTariffRow()">+ AGREGAR TARIFA</button><button class="btn" onclick="saveTariffs()">GUARDAR TARIFARIO</button></div>
+      <hr class="upload-divider">
+      <h4 style="margin:18px 0 8px">Catálogo de telas</h4>
+      <p class="sub">Añade el nombre de cada tela, su precio por metro y las prendas donde debe aparecer. Escribe las prendas compatibles separadas por comas (por ejemplo: Pantalón de varón, Saco). Las opciones del formulario se actualizan con esta configuración.</p>
+      <div style="overflow-x:auto"><table class="admin-table tariff-table"><thead><tr><th>Tela</th><th>Precio por metro (Bs)</th><th>Prendas compatibles</th><th></th></tr></thead><tbody id="fabricRows"></tbody></table></div>
+      <div class="admin-actions"><button class="btn outline" onclick="addFabricRow()">+ AGREGAR TELA</button><button class="btn" onclick="saveFabrics()">GUARDAR TELAS</button></div>
+      <div id="tariffStatus" class="status" aria-live="polite"></div>
+    </div>
+    <div class="panel admin-profile-panel" id="adminProfilesPanel" style="margin-top:16px"><h3 style="font-size:18px">Cuentas y permisos</h3><p class="sub">El administrador principal puede preparar cuentas de propietario. Los propietarios y el administrador principal pueden crear cuentas delegadas. Cada cuenta recibe permisos personalizados.</p><div class="admin-login-grid"><input id="newAdminName" placeholder="Nombre completo"><input id="newAdminPhone" placeholder="Teléfono"><input id="newAdminCI" placeholder="CI"><input id="newAdminUser" placeholder="Usuario"><input id="newAdminPass" type="password" placeholder="Contraseña"><select id="newAdminRole"><option value="delegado">Administrador delegado</option><option value="owner">Propietario (solo configuración inicial)</option></select></div><div class="permission-editor"><strong>Permisos para esta cuenta</strong><div class="permission-options"><label><input type="checkbox" name="newAdminPermission" value="pedidos" checked> Ver y gestionar pedidos</label><label><input type="checkbox" name="newAdminPermission" value="pagos"> Verificar pagos QR</label><label><input type="checkbox" name="newAdminPermission" value="catalogo"> Editar catálogo y precios</label></div><p class="map-note">Las cuentas de propietario deben configurarse expresamente; no se crean automáticamente. En producción, los permisos deberán aplicarse también en la base de datos.</p></div><div class="admin-actions"><button class="btn" onclick="createDelegatedAdmin()">CREAR CUENTA</button></div><div id="delegatedAdmins"></div></div><div class="panel" style="margin-top:16px" id="passwordPanel"><h3 style="font-size:18px">Seguridad de la cuenta</h3><p class="sub">Para cambiar una contraseña se exige el teléfono asociado y la contraseña anterior.</p><div class="admin-login-grid"><input id="changePhone" placeholder="Teléfono asociado"><input id="oldPassword" type="password" placeholder="Contraseña anterior"><input id="newPassword" type="password" placeholder="Nueva contraseña"><input id="newPassword2" type="password" placeholder="Repetir nueva contraseña"></div><div class="admin-actions"><button class="btn" onclick="changeCurrentPassword()">CAMBIAR CONTRASEÑA</button></div><div id="passwordStatus" class="status"></div></div>
+  </div>
+</div>
+
+<!-- Carrito -->
+<button class="cart-float" id="cartFloat" onclick="openCart()" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cartCount">0</span></button><aside id="cartDrawer" class="drawer right cart-drawer"><button class="drawer-close" onclick="closeCart()">×</button><h3>CARRITO / PEDIDO</h3><p class="sub">El total cambia automáticamente según cantidad y prendas.</p><div id="cartItems"></div><div class="cart-total-box"><div class="row"><span>Prendas</span><b id="cartUnits">0</b></div><div class="row"><span>Subtotal</span><b id="cartSubtotal">Bs. 0.00</b></div><div class="total"><span>TOTAL</span><span id="cartTotal">Bs. 0.00</span></div></div><button class="btn" onclick="goToOrder()">IR AL PEDIDO</button></aside>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+    <div class="modalbox">
+        <button class="close" onclick="closeModal()">×</button>
+        <h3>PEDIDO PREPARADO</h3>
+        <p id="modalText" style="color:#bbb"></p>
+        
+        <button class="btn" onclick="closeModal()">ACEPTAR</button>
+    </div>
+</div>
+
+<!-- Configuración local y conexión -->
+<script src="assets/js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/core/supabase-client.js"></script>
+<script src="assets/js/services/catalog-service.js"></script>
+<script src="assets/js/admin-config.js"></script>
+<script src="assets/js/app.js" defer></script>
+</body>
+</html>
