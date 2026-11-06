@@ -1,7 +1,7 @@
 // Aplicación
 // Estructura
 const cart=[];
-let customBase=0, customService="", customGender="male";
+let customBase=0, customService="", customGender="male", customGarmentId=null;
 const ADMIN={user:"",ci:"",password:"",phone:"",name:"Administrador",permissions:"completo",primary:true,...(window.ORELLANA_ADMIN_CONFIG||{})};
 // Acceso
 // Datos
@@ -73,6 +73,13 @@ async function loadDynamicCatalog(){
       const allTab=document.querySelector('.gender-tab[onclick*="all"]');
       filterCatalog('all',allTab);
     }
+    const serviceSelect=document.getElementById('service');
+    if(serviceSelect){
+      serviceSelect.innerHTML=garments.map(g=>'<option value="'+escapeHtml(g.name)+'|'+(g.sewing_price??'')+'|'+g.id+'">'+escapeHtml(g.name)+' · '+(g.sewing_price===null?'cotizar':'Bs. '+Number(g.sewing_price).toFixed(2))+'</option>').join('');
+      if(serviceSelect.options.length)serviceSelect.selectedIndex=0;
+      updateTotal();
+      await renderOrderFabricOptions();
+    }
     const repair=document.getElementById('repairGarment');
     if(repair){
       const repairs=garments.filter(g=>g.category==='arreglos');
@@ -99,7 +106,7 @@ function startRepairOrder(){
   if(status)status.textContent='Seleccionaste '+garment.value+'. Completa las especificaciones y añádelo al carrito para preparar el pedido.';
 }
 async function openCustomizer(service,price,gender,garmentId=null){
-  customService=service; customBase=price===null||price===undefined?null:getPrice(service,price); customGender=gender;
+  customService=service; customBase=price===null||price===undefined?null:getPrice(service,price); customGender=gender; customGarmentId=garmentId;
   document.getElementById('customTitle').textContent='Personalizar: '+service;
   populateFabricSelect('cFabric', service);
   const fabricSelect=document.getElementById('cFabric');
@@ -118,7 +125,7 @@ function refreshCustomizerTotal(){const q=Math.max(1,Number(document.getElementB
 function addConfiguredProduct(){
   if(!customService)return alert('Selecciona primero una prenda.');
   const q=Math.max(1,Number(document.getElementById('cQty').value)||1);
-  cart.push({id:Date.now()+Math.random(),service:customService,price:customBase,qty:q,gender:customGender,fabric:document.getElementById('cFabric').value||'Tela por confirmar con el taller',color:document.getElementById('cColor').value||'Por confirmar',style:document.getElementById('cStyle').value,notes:document.getElementById('cNotes').value||'Sin observaciones'});
+  cart.push({id:Date.now()+Math.random(),service:customService,garmentId:customGarmentId,price:customBase,qty:q,gender:customGender,fabric:document.getElementById('cFabric').value||'Tela por confirmar con el taller',color:document.getElementById('cColor').value||'Por confirmar',style:document.getElementById('cStyle').value,notes:document.getElementById('cNotes').value||'Sin observaciones'});
   renderCart(); const f=document.getElementById('cartFloat'); f.classList.remove('cart-pulse'); void f.offsetWidth; f.classList.add('cart-pulse'); openCart();
 }
 function renderCart(){
@@ -133,7 +140,7 @@ function changeQty(id,d){const i=cart.find(x=>x.id===id);if(i){i.qty=Math.max(1,
 function removeCart(id){const n=cart.findIndex(x=>x.id===id);if(n>-1)cart.splice(n,1);renderCart()}
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('drawerOverlay').classList.add('open')}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');if(!document.getElementById('drawerLeft').classList.contains('open')&&!document.getElementById('drawerRight').classList.contains('open'))document.getElementById('drawerOverlay').classList.remove('open')}
-function goToOrder(){closeCart();if(cart.length){const select=document.getElementById('service');const value=cart[0].service+'|'+(cart[0].price??'');if(![...select.options].some(o=>o.value===value))select.add(new Option(cart[0].service,value));select.value=value;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
+function goToOrder(){closeCart();if(cart.length){const select=document.getElementById('service');const option=[...select.options].find(o=>o.value.split('|')[2]===cart[0].garmentId);if(option)select.value=option.value;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal();renderOrderFabricOptions()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
 function getPrice(service,fallback){return fallback===null||fallback===undefined?null:Number(fallback)}
 function savePrices(){if(!can("catalogo"))return alert("Tu cuenta no tiene permiso para editar el catálogo.");document.querySelectorAll('.admin-price').forEach(inp=>{const service=inp.dataset.service;const val=Math.max(0,Number(inp.value)||0);localStorage.setItem('price_'+service,val);document.querySelectorAll(`.product-card[data-service="${service}"] .price`).forEach(x=>x.textContent='Desde Bs. '+val.toLocaleString('es-BO'));document.querySelectorAll(`#service option[value^="${service}|"]`).forEach(o=>o.value=service+'|'+val);});alert('Precios actualizados en este navegador.')}
 
@@ -339,7 +346,22 @@ function populateFabricSelect(selectId, garment){
  options.forEach(f=>{const o=document.createElement('option');o.value=f.name;o.textContent=f.name;select.appendChild(o)});
  if(options.some(f=>f.name===previous))select.value=previous;
 }
-function renderOrderFabricOptions(){const service=document.getElementById('service');if(service)populateFabricSelect('fabric',(service.value||'').split('|')[0]);}
+async function renderOrderFabricOptions(){
+  const service=document.getElementById('service');
+  if(!service)return;
+  const parts=(service.value||'').split('|');
+  const garmentId=parts[2];
+  const select=document.getElementById('fabric');
+  if(garmentId && window.OrellanaCatalogService && select){
+    try{
+      const fabrics=await window.OrellanaCatalogService.listGarmentFabrics(garmentId);
+      select.innerHTML='<option value="">Selecciona una tela compatible</option>'+fabrics.map(f=>'<option value="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+(f.price_per_meter===null?' · cotizar':' · Bs. '+Number(f.price_per_meter).toFixed(2)+'/m')+'</option>').join('');
+      if(!fabrics.length)select.innerHTML='<option value="">Tela por confirmar con el taller</option>';
+      return;
+    }catch(error){console.warn('[ORELLANA] No se pudieron cargar las telas:',error)}
+  }
+  populateFabricSelect('fabric',parts[0]);
+}
 function loadTariffManager(){renderTariffRows();renderFabricRows()}
 function renderTariffRows(){const el=document.getElementById('tariffRows');if(!el)return;el.innerHTML=getTariffs().map((t,i)=>`<tr><td><input aria-label="Prenda ${i+1}" data-field="garment" value="${escapeHtml(t.garment||'')}" placeholder="Tipo de prenda"></td><td><input aria-label="Modelo ${i+1}" data-field="model" value="${escapeHtml(t.model||'')}" placeholder="Modelo o tela"></td><td><input aria-label="Precio de costura ${i+1}" data-field="price" type="number" min="0" step="1" value="${t.price===null||t.price===undefined?'':escapeHtml(t.price)}" placeholder="Pendiente"></td><td><input aria-label="Notas de tarifa ${i+1}" data-field="notes" value="${escapeHtml(t.notes||'')}" placeholder="Notas / pendiente de confirmar"></td><td><button class="mini" onclick="removeTariffRow(${i})">Quitar</button></td></tr>`).join('')}
 function renderFabricRows(){const el=document.getElementById('fabricRows');if(!el)return;el.innerHTML=getFabrics().map((f,i)=>`<tr><td><input aria-label="Nombre de tela ${i+1}" data-field="name" value="${escapeHtml(f.name||'')}" placeholder="Nombre de la tela"></td><td><input aria-label="Precio por metro ${i+1}" data-field="price" type="number" min="0" step="0.5" value="${f.price===null||f.price===undefined?'':escapeHtml(f.price)}" placeholder="Pendiente"></td><td><input aria-label="Prendas compatibles ${i+1}" data-field="compatible" value="${escapeHtml(f.compatible||'')}" placeholder="Prendas compatibles, separadas por comas"></td><td><button class="mini" onclick="removeFabricRow(${i})">Quitar</button></td></tr>`).join('')}
@@ -468,7 +490,7 @@ function initializeApp(){
   renderCart();
   updateTotal();
   renderOrderFabricOptions();
-  document.getElementById('service')?.addEventListener('change',renderOrderFabricOptions);
+  document.getElementById('service')?.addEventListener('change',()=>{updateTotal();renderOrderFabricOptions()});
   toggleMeasurementRequest();
   setupImageUploads();
   loadDynamicCatalog();
