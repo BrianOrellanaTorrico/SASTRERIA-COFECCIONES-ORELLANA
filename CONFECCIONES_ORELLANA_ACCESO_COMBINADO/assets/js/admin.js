@@ -3,15 +3,15 @@
   const state = { user: null, profile: null, garments: [], fabrics: [], orders: [], compatibility: [] };
   const can = permission => state.profile?.role === 'owner' || (state.profile?.role === 'admin' && (state.profile.permissions || []).includes(permission));
   function applyPermissions(){
-    const rules = { pedidos: 'pedidos', catalogo: 'catalogo', materiales: 'catalogo' };
+    const rules = { catalogo: 'catalogo', materiales: 'catalogo' };
     Object.entries(rules).forEach(([section, permission]) => {
-      const allowed = can(permission);
+      const allowed = section === 'pedidos' ? (can('pedidos') || can('pagos')) : can(permission);
       const node = $(section);
       if (node) node.hidden = !allowed;
       document.querySelectorAll('a[href="#' + section + '"],button[data-section="' + section + '"]').forEach(el => el.hidden = !allowed);
     });
     const summary = $('resumen');
-    if (summary) summary.hidden = !(can('pedidos') || can('catalogo') || can('cuentas'));
+    if (summary) summary.hidden = !(can('pedidos') || can('pagos') || can('catalogo') || can('cuentas'));
   }
   const money = (v) => v === null || v === undefined || v === '' ? '—' : Number(v).toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2});
   const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -38,17 +38,21 @@
     try{const {data,error}=await client().auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await authorize(data.user)}catch(e){message('loginMessage',failText(e),true)}
   }
   async function signOut(){if(client()) await client().auth.signOut();state.user=null;state.profile=null;$('password').value='';$('adminIdentity').textContent='Sin sesión';$('signOutBtn').hidden=true;show('loginView')}
-  async function refreshAll(){const tasks=[];if(can('pedidos'))tasks.push(loadOrders());if(can('catalogo'))tasks.push(loadGarments(),loadFabrics());await Promise.all(tasks);updateStats()}
-  async function loadOrders(){if(!can('pedidos'))return;const body=$('ordersBody');body.innerHTML='<tr><td colspan="6" class="empty">Cargando…</td></tr>';
+  async function refreshAll(){const tasks=[];if(can('pedidos')||can('pagos'))tasks.push(loadOrders());if(can('catalogo'))tasks.push(loadGarments(),loadFabrics());await Promise.all(tasks);updateStats()}
+  async function loadOrders(){if(!can('pedidos')&&!can('pagos'))return;const body=$('ordersBody');body.innerHTML='<tr><td colspan="7" class="empty">Cargando…</td></tr>';
     try{const {data,error}=await client().from('orders').select('id,customer_name,customer_phone,order_details,quoted_total,status,created_at').order('created_at',{ascending:false});if(error)throw error;state.orders=data||[];renderOrders()}
     catch(e){body.innerHTML=`<tr><td colspan="6" class="empty">${escapeHtml(failText(e))}</td></tr>`}
   }
-  function renderOrders(){const body=$('ordersBody');if(!state.orders.length){body.innerHTML='<tr><td colspan="6" class="empty">Todavía no hay pedidos en Supabase.</td></tr>';return}
-    body.innerHTML=state.orders.map(o=>{const detail=typeof o.order_details==='string'?o.order_details:JSON.stringify(o.order_details||{});return `<tr data-order="${o.id}"><td>${escapeHtml(o.customer_name)}<small>${new Date(o.created_at).toLocaleString('es-BO')}</small></td><td>${escapeHtml(o.customer_phone)}</td><td class="detail-cell" title="${escapeHtml(detail)}">${escapeHtml(detail.slice(0,100))}</td><td><input class="quote-input" type="number" min="0" step="0.01" value="${o.quoted_total??''}" placeholder="Sin cotizar"></td><td><select class="status-input">${['pendiente','en_revision','aceptado','en_confeccion','listo','entregado','cancelado'].map(v=>`<option value="${v}" ${o.status===v?'selected':''}>${v.replaceAll('_',' ')}</option>`).join('')}</select></td><td><button class="button button-outline save-order">Guardar</button></td></tr>`}).join('');
+  function renderOrders(){const body=$('ordersBody');if(!state.orders.length){body.innerHTML='<tr><td colspan="7" class="empty">Todavía no hay pedidos en Supabase.</td></tr>';return}
+    body.innerHTML=state.orders.map(o=>{const detail=typeof o.order_details==='string'?o.order_details:JSON.stringify(o.order_details||{});return `<tr data-order="${o.id}"><td>${escapeHtml(o.customer_name)}<small>${new Date(o.created_at).toLocaleString('es-BO')}</small></td><td>${escapeHtml(o.customer_phone)}</td><td class="detail-cell" title="${escapeHtml(detail)}">${escapeHtml(detail.slice(0,100))}</td><td><input class="quote-input" type="number" min="0" step="0.01" value="${o.quoted_total??''}" placeholder="Sin cotizar" ${can('pedidos')?'':'disabled'}></td><td><select class="status-input" ${can('pedidos')?'':'disabled'}>${['pendiente','en_revision','aceptado','en_confeccion','listo','entregado','cancelado'].map(v=>`<option value="${v}" ${o.status===v?'selected':''}>${v.replaceAll('_',' ')}</option>`).join('')}</select></td><td><select class="payment-input" ${can('pagos')?'':'disabled'}><option value="sin_revisar" ${(o.payment_status||'sin_revisar')==='sin_revisar'?'selected':''}>Sin revisar</option><option value="verificado" ${o.payment_status==='verificado'?'selected':''}>Verificado</option><option value="rechazado" ${o.payment_status==='rechazado'?'selected':''}>Rechazado</option></select></td><td><button class="button button-outline save-order" ${can('pedidos')||can('pagos')?'':'disabled'}>Guardar</button></td></tr>`}).join('');
     body.querySelectorAll('.save-order').forEach(b=>b.addEventListener('click',saveOrder));
   }
-  async function saveOrder(e){const tr=e.currentTarget.closest('tr'),id=tr.dataset.order,quote=tr.querySelector('.quote-input').value,status=tr.querySelector('.status-input').value;e.currentTarget.disabled=true;
-    try{const {error}=await client().from('orders').update({quoted_total:quote===''?null:Number(quote),status}).eq('id',id);if(error)throw error;message('loginMessage','Pedido actualizado correctamente.');await loadOrders();updateStats()}catch(err){alert(failText(err));e.currentTarget.disabled=false}
+  async function saveOrder(e){const tr=e.currentTarget.closest('tr'),id=tr.dataset.order,quote=tr.querySelector('.quote-input').value,status=tr.querySelector('.status-input').value,payment=tr.querySelector('.payment-input').value;e.currentTarget.disabled=true;
+    try{
+      if(can('pedidos')){const {error}=await client().from('orders').update({quoted_total:quote===''?null:Number(quote),status}).eq('id',id);if(error)throw error;}
+      if(can('pagos')){const {error}=await client().rpc('set_order_payment_status',{p_order_id:id,p_payment_status:payment});if(error)throw error;}
+      message('loginMessage','Pedido actualizado correctamente.');await loadOrders();updateStats();
+    }catch(err){alert(failText(err));e.currentTarget.disabled=false}
   }
   async function loadGarments(){if(!can('catalogo'))return;try{const {data,error}=await client().from('garments').select('id,name,category,description,sewing_price,active').order('name');if(error)throw error;state.garments=data||[];renderGarments();fillCompatibilitySelects()}catch(e){$('garmentsList').innerHTML=`<div class="empty">${escapeHtml(failText(e))}</div>`}}
   function renderGarments(){$('garmentsList').innerHTML=state.garments.length?state.garments.map(g=>`<div class="record"><div class="record-main"><strong>${escapeHtml(g.name)}</strong><small>${escapeHtml(g.description||'Sin descripción')} · Bs. ${money(g.sewing_price)}</small><span class="tag">${escapeHtml(g.category)} · ${g.active?'Publicado':'Oculto'}</span></div><div class="record-actions"><button class="button button-outline edit-garment" data-id="${g.id}">Editar</button><button class="button button-outline toggle-garment" data-id="${g.id}">${g.active?'Ocultar':'Publicar'}</button></div></div>`).join(''):'<div class="empty">No hay prendas registradas.</div>';
