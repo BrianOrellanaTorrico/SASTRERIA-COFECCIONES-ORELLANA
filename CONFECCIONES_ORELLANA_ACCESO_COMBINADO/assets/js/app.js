@@ -48,21 +48,156 @@ function filterCatalog(g,b){
   grid.classList.toggle('filtered-mode',g!=='all');
 }
 
-function startRepairOrder(){
-  const garment=document.getElementById('repairGarment');
-  const details=document.getElementById('repairDetails');
-  const status=document.getElementById('repairStatus');
-  if(!garment || !garment.value){
-    if(status)status.textContent='Selecciona primero el tipo de prenda que deseas arreglar.';
-    if(garment)garment.focus();
+
+function renderRepairSelectorCards(){
+  const select=document.getElementById('repairGarment');
+  const grid=document.getElementById('repairGarmentOptions');
+  if(!select||!grid)return;
+  const options=[...select.options].filter(option=>option.value&&!option.disabled);
+  grid.replaceChildren();
+  if(!options.length){
+    const empty=document.createElement('p');
+    empty.className='repair-options-empty';
+    empty.textContent='Los propietarios todavía no han publicado tipos de arreglos.';
+    grid.appendChild(empty);
     return;
   }
-  const repairName='Arreglo de '+garment.value;
-  openCustomizer(repairName,30,'repair');
-  const notes=document.getElementById('cNotes');
-  if(notes)notes.value=details && details.value.trim() ? details.value.trim() : 'Tipo de arreglo por confirmar con el taller';
-  refreshCustomizerTotal();
-  if(status)status.textContent='Seleccionaste '+garment.value+'. Completa las especificaciones y añádelo al carrito para preparar el pedido.';
+  options.forEach(option=>{
+    const name=option.dataset.garmentName||option.textContent.trim();
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='repair-option-card';
+    card.dataset.repairValue=option.value;
+    card.setAttribute('aria-label','Solicitar arreglo de '+name);
+    card.setAttribute('aria-pressed',String(option.value===select.value));
+    const symbol=document.createElement('span');
+    symbol.className='repair-option-symbol';
+    symbol.setAttribute('aria-hidden','true');
+    symbol.textContent='✂';
+    const title=document.createElement('strong');
+    title.className='repair-option-name';
+    title.textContent=name;
+    const hint=document.createElement('small');
+    hint.className='repair-option-action';
+    hint.textContent='SOLICITAR ARREGLO';
+    card.append(symbol,title,hint);
+    card.addEventListener('click',()=>{
+      select.value=option.value;
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+    card.addEventListener('pointerdown',()=>card.classList.add('is-touching'));
+    ['pointerup','pointercancel','pointerleave'].forEach(type=>card.addEventListener(type,()=>card.classList.remove('is-touching')));
+    grid.appendChild(card);
+  });
+}
+function handleRepairGarmentChange(){
+  const select=document.getElementById('repairGarment');
+  const fields=document.getElementById('repairRequestFields');
+  const selected=select?.selectedOptions?.[0];
+  const hasSelection=Boolean(select?.value);
+  if(fields)fields.hidden=!hasSelection;
+  document.querySelectorAll('#repairGarmentOptions .repair-option-card').forEach(card=>{
+    const active=card.dataset.repairValue===select?.value;
+    card.classList.toggle('is-selected',active);
+    card.setAttribute('aria-pressed',String(active));
+  });
+  const title=document.getElementById('repairSelectedName');
+  if(title)title.textContent=selected?.dataset.garmentName||selected?.textContent||'—';
+  const status=document.getElementById('repairStatus');
+  if(status)status.textContent=hasSelection?'Completa los datos para enviar tu solicitud de arreglo.':'Selecciona una prenda para continuar.';
+  const requestStatus=document.getElementById('repairRequestStatus');
+  if(requestStatus)requestStatus.textContent='';
+}
+async function loadRepairGarments(){
+  if(!window.ORELLANA_SUPABASE||!window.OrellanaCatalogService)return;
+  const select=document.getElementById('repairGarment');
+  if(!select)return;
+  try{
+    const garments=await window.OrellanaCatalogService.listGarments();
+    const repairs=garments.filter(item=>String(item.category||'').toLowerCase()==='arreglos');
+    select.replaceChildren();
+    const placeholder=document.createElement('option');
+    placeholder.value='';
+    placeholder.textContent=repairs.length?'Selecciona una prenda…':'No hay arreglos publicados actualmente';
+    placeholder.disabled=true;
+    placeholder.selected=true;
+    select.appendChild(placeholder);
+    repairs.forEach(item=>{
+      const option=document.createElement('option');
+      option.value=item.id;
+      option.textContent=item.name;
+      option.dataset.garmentName=item.name;
+      select.appendChild(option);
+    });
+    renderRepairSelectorCards();
+    handleRepairGarmentChange();
+  }catch(error){
+    console.warn('[ORELLANA] No se pudieron cargar los arreglos publicados; se conservan las opciones iniciales.',error);
+  }
+}
+async function submitRepairRequest(event){
+  event.preventDefault();
+  const select=document.getElementById('repairGarment');
+  const selected=select?.selectedOptions?.[0];
+  const status=document.getElementById('repairRequestStatus');
+  const button=document.getElementById('sendRepairRequest');
+  const name=document.getElementById('repairCustomerName')?.value.trim()||'';
+  const phone=document.getElementById('repairCustomerPhone')?.value.trim()||'';
+  const description=document.getElementById('repairDetails')?.value.trim()||'';
+  if(!select?.value||name.length<2||phone.length<7||description.length<4){
+    if(status)status.textContent='Completa la prenda, tu nombre, un teléfono válido y la descripción del arreglo.';
+    return;
+  }
+  if(!window.ORELLANA_SUPABASE){
+    if(status)status.textContent='El envío en línea todavía no está configurado. Contacta al taller o inténtalo cuando la conexión esté disponible.';
+    return;
+  }
+  const garmentName=selected?.dataset.garmentName||selected?.textContent||select.value;
+  const requestCode='ARR-'+Date.now().toString().slice(-8);
+  const payload={
+    customer_name:name,
+    customer_phone:phone,
+    order_details:{
+      service:'Arreglo de prendas',
+      service_type:'arreglo',
+      request_type:'Solicitud de arreglo',
+      request_code:requestCode,
+      request_date:new Date().toISOString(),
+      repair_garment:garmentName,
+      repair_description:description,
+      on_site_required:true,
+      visit_note:'El cliente debe acercarse a la tienda con la prenda para revisión presencial, confirmación del precio y plazo. No se solicita adelanto.',
+      origin:'formulario_arreglos'
+    },
+    quoted_total:null,
+    status:'pendiente',
+    payment_status:'no_requerido'
+  };
+  if(button)button.disabled=true;
+  if(status)status.textContent='Enviando solicitud al taller…';
+  try{
+    const result=await window.ORELLANA_SUPABASE.from('orders').insert(payload);
+    if(result.error)throw result.error;
+    if(status)status.textContent='¡Solicitud enviada! El taller podrá revisarla desde su panel administrativo. Código: '+requestCode+'. Recuerda acercarte a la tienda con la prenda.';
+    document.getElementById('repairRequestForm')?.reset();
+    if(select)select.value='';
+    handleRepairGarmentChange();
+  }catch(error){
+    console.error('[ORELLANA] No se pudo registrar la solicitud de arreglo:',error);
+    if(status)status.textContent='No se pudo registrar la solicitud. Comprueba la conexión e inténtalo nuevamente.';
+  }finally{
+    if(button)button.disabled=false;
+  }
+}
+function initializeRepairRequests(){
+  const form=document.getElementById('repairRequestForm');
+  const select=document.getElementById('repairGarment');
+  if(!form||!select)return;
+  form.addEventListener('submit',submitRepairRequest);
+  select.addEventListener('change',handleRepairGarmentChange);
+  renderRepairSelectorCards();
+  handleRepairGarmentChange();
+  loadRepairGarments();
 }
 function openCustomizer(service,price,gender){
   customService=service; customBase=getPrice(service,price); customGender=gender;
@@ -484,3 +619,4 @@ function readLocalArray(key){
 }
 
 initializeApp();
+initializeRepairRequests();
