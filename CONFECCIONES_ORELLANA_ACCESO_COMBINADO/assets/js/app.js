@@ -10,7 +10,7 @@ if(localStorage.getItem("orellana_admin_login_config_version")!=="login-config-v
   localStorage.setItem("orellana_admin_login_config_version","login-config-v3");
 }
 let session={type:null,phone:"",ci:"",user:"",name:"",permissions:""};
-let selectedPay="QR"; let verified=false; let currentCI="";
+let selectedPay="Sin adelanto"; let verified=false; let currentCI="";
 const priceDefaults={"Pantalón":250,"Saco":500,"Pollera":300,"Vestido de 15 años":900,"Falda":180,"Vestido materno":700,"Vestido de novia":1500,"Vestido de novia para cholitas":1800};
 
 // Catálogo
@@ -282,15 +282,14 @@ function changeClientPassword(){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function toggleMeasurementRequest(){
- const unknown=!!document.getElementById('unknownMeasurements')?.checked;
  const qr=document.getElementById('qrOfficialBox');
  const notice=document.getElementById('requestContactNotice');
  const status=document.getElementById('payStatus');
  const paymentLink=document.getElementById('summaryPaymentLink');
- if(qr)qr.hidden=unknown;
- if(notice)notice.hidden=!unknown;
- if(paymentLink)paymentLink.hidden=unknown;
- if(status){status.textContent=unknown?'Solicitud de medidas: no se requiere pago por adelantado. Contacta con los propietarios para coordinar las medidas.':'Método seleccionado: QR. Estado del pago: pendiente de verificación por el propietario.';status.classList.add('show');}
+ if(qr)qr.hidden=true;
+ if(notice)notice.hidden=false;
+ if(paymentLink)paymentLink.hidden=true;
+ if(status){status.textContent='No se solicita adelanto por defecto. Para coordinar medidas, telas y pagos, contacta directamente con CONFECCIONES ORELLANA.';status.classList.add('show');}
 }
 function resetOrder(){document.getElementById('orderForm').reset();const refPreview=document.getElementById('referencePreview');if(refPreview){refPreview.removeAttribute('src');refPreview.hidden=true;}document.getElementById('ciStatus').classList.remove('show');document.getElementById('rName').textContent='No identificado';document.getElementById('rCI').textContent='—';verified=false;currentCI='';toggleMeasurementRequest();updateTotal()}
 
