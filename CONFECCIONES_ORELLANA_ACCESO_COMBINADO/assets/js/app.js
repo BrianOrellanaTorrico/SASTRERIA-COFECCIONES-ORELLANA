@@ -98,7 +98,7 @@ async function loadDynamicCatalog(){
   }catch(error){console.error('[ORELLANA] No se pudo cargar el catálogo remoto:',error)}
 }
 
-function startRepairOrder(){
+async function startRepairOrder(){
   const garment=document.getElementById('repairGarment');
   const details=document.getElementById('repairDetails');
   const status=document.getElementById('repairStatus');
@@ -109,7 +109,7 @@ function startRepairOrder(){
   }
   const selectedGarment=catalogById.get(garment.value);
   const repairName='Arreglo de '+(selectedGarment?.name||garment.options[garment.selectedIndex]?.text||'prenda');
-  openCustomizer(repairName,selectedGarment?.sewing_price??null,'repair',selectedGarment?.id||null);
+  await openCustomizer(repairName,selectedGarment?.sewing_price??null,'repair',selectedGarment?.id||null);
   const notes=document.getElementById('cNotes');
   if(notes)notes.value=details && details.value.trim() ? details.value.trim() : 'Tipo de arreglo por confirmar con el taller';
   refreshCustomizerTotal();
