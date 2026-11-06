@@ -19,7 +19,7 @@ let selectedPay="QR"; let verified=false; let currentCI="";
 const priceDefaults={"Pantalón":250,"Saco":500,"Pollera":300,"Vestido de 15 años":900,"Falda":180,"Vestido materno":700,"Vestido de novia":1500,"Vestido de novia para cholitas":1800};
 
 // Catálogo
-const originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
+let originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
 function filterCatalog(g,b){
   const grid=document.querySelector('#catalogo .grid');
   if(!grid)return;
@@ -51,6 +51,45 @@ function filterCatalog(g,b){
     });
   }
   grid.classList.toggle('filtered-mode',g!=='all');
+}
+
+
+async function loadCloudCatalog(){
+  if(!window.ORELLANA_SUPABASE||!window.OrellanaCatalogService)return;
+  try{
+    const [garments,fabrics,links]=await Promise.all([window.OrellanaCatalogService.listGarments(),window.OrellANA_CatalogService?window.OrellANA_CatalogService.listFabrics():window.OrellanaCatalogService.listFabrics(),window.OrellanaCatalogService.listCompatibility()]);
+    const activeGarments=garments.filter(g=>['femenina','masculina'].includes(String(g.category||'').toLowerCase()));
+    if(activeGarments.length){
+      const grid=document.querySelector('#catalogo .grid');
+      if(grid){
+        grid.replaceChildren();
+        activeGarments.forEach(g=>{
+          const gender=String(g.category).toLowerCase()==='masculina'?'male':'female';
+          const price=Math.max(0,Number(g.sewing_price)||0);
+          const card=document.createElement('article');card.className='card product-card '+(gender==='male'?'male-card':'female-card');
+          card.dataset.gender=gender;card.dataset.service=g.name;card.dataset.price=String(price);
+          const frame=document.createElement('span');frame.className='garment-frame';
+          const buttons=document.createElement('span');buttons.className='metal-buttons';buttons.innerHTML='<i></i><i></i><i></i>';
+          const sample=document.createElement('div');sample.className='sample';
+          const imageRecord=(g.garment_images||[]).find(x=>x.storage_path);
+          if(imageRecord){const url=window.ORELLANA_SUPABASE.storage.from('catalogo').getPublicUrl(imageRecord.storage_path).data.publicUrl;const img=document.createElement('img');img.src=url;img.alt=imageRecord.alt_text||('Imagen referencial: '+g.name);img.loading='lazy';img.onerror=()=>img.remove();sample.appendChild(img)}
+          const heading=document.createElement('h3');heading.textContent=g.name;
+          const description=document.createElement('p');description.textContent=g.description||'Prenda confeccionada a medida.';
+          const priceLabel=document.createElement('div');priceLabel.className='price';priceLabel.textContent=price>0?'Desde Bs. '+price.toLocaleString('es-BO'):'Precio a consultar';
+          const button=document.createElement('button');button.className='mini';button.type='button';button.textContent='PERSONALIZAR';button.addEventListener('click',()=>openCustomizer(g.name,price,gender));
+          card.append(frame,buttons,sample,heading,description,priceLabel,button);grid.appendChild(card);
+        });
+        originalCatalogOrder=[...grid.querySelectorAll('.product-card')];grid.classList.remove('filtered-mode');
+        document.querySelectorAll('.gender-tab').forEach((tab,i)=>tab.classList.toggle('active',i===0));
+      }
+      const serviceSelect=document.getElementById('service');
+      if(serviceSelect){activeGarments.forEach(g=>{const currentPrice=Math.max(0,Number(g.sewing_price)||0);safeLocalSet('price_'+g.name,currentPrice);const existing=[...serviceSelect.options].find(o=>o.value.split('|')[0]===g.name);if(existing){existing.value=g.name+'|'+currentPrice;existing.textContent=g.name}else{const option=document.createElement('option');option.value=g.name+'|'+currentPrice;option.textContent=g.name;serviceSelect.appendChild(option)}})}
+    }
+    const fabricRows=fabrics.map(f=>{const ids=links.filter(x=>x.fabric_id===f.id).map(x=>x.garment_id);const names=garments.filter(g=>ids.includes(g.id)).map(g=>g.name);return{name:f.name,price:f.price_per_meter??'',compatible:names.join(', ')}});
+    safeLocalSet('orellana_fabrics',JSON.stringify(fabricRows));renderOrderFabricOptions();
+    const currentService=document.getElementById('service')?.value||'';
+    if(currentService)populateFabricSelect('cFabric',customService||currentService.split('|')[0]);
+  }catch(error){console.warn('[ORELLANA] Se conserva el catálogo local porque no se pudo actualizar desde Supabase:',error)}
 }
 
 
@@ -229,7 +268,7 @@ function removeCart(id){const n=cart.findIndex(x=>x.id===id);if(n>-1)cart.splice
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('drawerOverlay').classList.add('open')}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');if(!document.getElementById('drawerLeft').classList.contains('open')&&!document.getElementById('drawerRight').classList.contains('open'))document.getElementById('drawerOverlay').classList.remove('open')}
 function goToOrder(){closeCart();if(cart.length){document.getElementById('service').value=cart[0].service+'|'+cart[0].price;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
-function getPrice(service,fallback){return Number(safeLocalGet('price_'+service))||Number(fallback)||0}
+function getPrice(service,fallback){const stored=safeLocalGet('price_'+service);return stored!==null&&stored!==''?Math.max(0,Number(stored)||0):Math.max(0,Number(fallback)||0)}
 function savePrices(){if(!can("catalogo"))return alert("Tu cuenta no tiene permiso para editar el catálogo.");document.querySelectorAll('.admin-price').forEach(inp=>{const service=inp.dataset.service;const val=Math.max(0,Number(inp.value)||0);safeLocalSet('price_'+service,val);document.querySelectorAll(`.product-card[data-service="${service}"] .price`).forEach(x=>x.textContent='Desde Bs. '+val.toLocaleString('es-BO'));document.querySelectorAll(`#service option[value^="${service}|"]`).forEach(o=>o.value=service+'|'+val);});alert('Precios actualizados en este navegador.')}
 
 function openDrawer(side){document.getElementById('drawerOverlay').classList.add('open');document.getElementById(side==='left'?'drawerLeft':'drawerRight').classList.add('open')}
@@ -573,6 +612,7 @@ function initializeApp(){
   updateTotal();
   renderOrderFabricOptions();
   document.getElementById('service')?.addEventListener('change',renderOrderFabricOptions);
+  loadCloudCatalog();
   toggleMeasurementRequest();
   setupImageUploads();
 }
