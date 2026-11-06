@@ -225,43 +225,71 @@
     </div>
 </section>
 
-<!-- Arreglos -->
+
+<!-- Arreglos: flujo independiente de confección -->
 <section id="arreglo-prendas" class="repair-section">
-    <div class="head">
-        <div class="eyebrow">SERVICIO DE AJUSTE</div>
-        <h2>Arreglo de prendas</h2>
-        <p>Selecciona la prenda que necesitas arreglar. Este servicio está separado del catálogo de confección a medida.</p>
+  <div class="head">
+    <div class="eyebrow">SERVICIO DE AJUSTE</div>
+    <h2>Arreglo de prendas</h2>
+    <p>Selecciona la prenda que necesitas arreglar y envía una solicitud independiente del servicio de confección.</p>
+  </div>
+  <div class="repair-panel">
+    <div class="repair-panel-intro">
+      <span class="repair-icon" aria-hidden="true">✂</span>
+      <div>
+        <h3>¿Qué deseas arreglar?</h3>
+        <p>Elige una prenda para abrir el formulario de solicitud. No se añadirá al carrito de confección.</p>
+      </div>
     </div>
-    <div class="repair-panel">
-        <div class="repair-panel-intro">
-            <span class="repair-icon" aria-hidden="true">✂</span>
-            <div>
-                <h3>¿Qué deseas arreglar?</h3>
-                <p>Elige el tipo de prenda y describe brevemente el ajuste que necesitas.</p>
-            </div>
-        </div>
+    <div class="repair-picker">
+      <span class="repair-picker-title" id="repairPickerTitle">SELECCIONA EL TIPO DE PRENDA</span>
+      <p class="repair-picker-hint">Las opciones se pueden administrar desde el catálogo cuando Supabase esté configurado.</p>
+      <div id="repairGarmentOptions" class="repair-options-grid" role="group" aria-labelledby="repairPickerTitle">
+        <p class="repair-options-empty">Preparando opciones de arreglo…</p>
+      </div>
+      <select id="repairGarment" class="repair-native-select" aria-hidden="true" tabindex="-1">
+        <option value="">Selecciona una prenda…</option>
+        <option value="Busos">Busos</option>
+        <option value="Jeans">Jeans</option>
+        <option value="Chamarras">Chamarras</option>
+        <option value="Camisas">Camisas</option>
+        <option value="Poleras">Poleras</option>
+        <option value="Pantalones">Pantalones</option>
+      </select>
+    </div>
+    <div id="repairRequestFields" class="repair-request-fields" hidden>
+      <div class="repair-selected-banner">
+        <span>PRENDA SELECCIONADA</span>
+        <strong id="repairSelectedName">—</strong>
+      </div>
+      <form id="repairRequestForm" class="repair-request-form">
         <div class="repair-form-grid">
-            <label class="repair-field" for="repairGarment">
-                <span>SELECCIONAR PRENDA</span>
-                <select id="repairGarment">
-                    <option value="">Selecciona una prenda…</option>
-                    <option>Busos</option>
-                    <option>Jeans</option>
-                    <option>Chamarras</option>
-                    <option>Camisas</option>
-                    <option>Poleras</option>
-                    <option>Pantalones</option>
-                </select>
-            </label>
-            <label class="repair-field" for="repairDetails">
-                <span>¿QUÉ ARREGLO NECESITAS?</span>
-                <textarea id="repairDetails" rows="3" placeholder="Ej.: ajustar el largo, cambiar cierre, estrechar cintura…"></textarea>
-            </label>
+          <label class="repair-field" for="repairCustomerName">
+            <span>NOMBRE COMPLETO</span>
+            <input id="repairCustomerName" name="customer_name" type="text" autocomplete="name" maxlength="120" required placeholder="Nombre y apellidos">
+          </label>
+          <label class="repair-field" for="repairCustomerPhone">
+            <span>TELÉFONO DE CONTACTO</span>
+            <input id="repairCustomerPhone" name="customer_phone" type="tel" autocomplete="tel" minlength="7" maxlength="25" required placeholder="Número de contacto">
+          </label>
+          <label class="repair-field repair-description-field" for="repairDetails">
+            <span>¿QUÉ ARREGLO NECESITAS?</span>
+            <textarea id="repairDetails" name="repair_description" rows="4" minlength="4" maxlength="1800" required placeholder="Ej.: ajustar el largo, cambiar un cierre, estrechar la cintura o reparar una costura…"></textarea>
+          </label>
         </div>
-        <p class="repair-price-note">Precio referencial desde Bs. 30. El costo final depende del tipo de arreglo y se confirmará con el taller.</p>
-        <button class="btn" type="button" onclick="startRepairOrder()">CONTINUAR CON EL ARREGLO</button>
-        <div id="repairStatus" class="repair-status" role="status" aria-live="polite"></div>
+        <div class="repair-visit-note">
+          <strong>IMPORTANTE: REVISIÓN PRESENCIAL</strong>
+          <p>Después de enviar la solicitud, deberás acercarte a la tienda con la prenda para que los propietarios revisen el trabajo, confirmen el precio y acuerden el plazo. No se solicita adelanto.</p>
+        </div>
+        <div class="repair-request-actions">
+          <button class="btn" id="sendRepairRequest" type="submit">ENVIAR SOLICITUD DE ARREGLO</button>
+          <a class="btn outline" href="#contacto">CONTACTO Y UBICACIÓN DEL TALLER</a>
+        </div>
+        <p id="repairRequestStatus" class="repair-status" role="status" aria-live="polite"></p>
+      </form>
     </div>
+    <p id="repairStatus" class="repair-status" role="status" aria-live="polite">Selecciona una prenda para continuar.</p>
+  </div>
 </section>
 
 <!-- Paneles -->
