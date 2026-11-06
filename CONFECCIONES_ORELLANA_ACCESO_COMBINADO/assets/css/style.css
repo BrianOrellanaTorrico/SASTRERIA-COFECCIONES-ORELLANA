@@ -414,3 +414,36 @@ header,main,footer{position:relative;z-index:1}
 }
 .admin-reveal input:focus{outline:none;border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.12)}
 .admin-reveal .access-btn{border-radius:5px;min-height:46px;font-weight:700;letter-spacing:1.2px}
+
+
+/* Selector de arreglos: acabado textil blanco/plata con base dorada */
+.repair-picker{position:relative;padding:clamp(15px,2.5vw,24px);border:1px solid #c5c9ce;border-radius:10px;background:linear-gradient(145deg,#fff 0%,#f1f2f3 48%,#dfe2e6 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 28px rgba(0,0,0,.14);color:#171717}
+.repair-picker:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(120,126,134,.075) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,rgba(255,255,255,.75) 0 1px,transparent 1px 6px);opacity:.65}
+.repair-picker-title{position:relative;display:block;margin:0 0 6px;color:#171717;font-size:13px;font-weight:800;letter-spacing:1px}
+.repair-picker-hint{position:relative;margin:0 0 16px;color:#4b4e53;font-size:12px;line-height:1.55}
+.repair-options-grid{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.repair-option-card{position:relative;isolation:isolate;display:flex;min-height:112px;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px 10px 15px;overflow:hidden;border:1px solid #c4c8ce;border-bottom:5px solid #c49a32;border-radius:9px;background:linear-gradient(155deg,#fff 0%,#f0f1f2 45%,#dfe2e5 100%);color:#171717;text-align:center;cursor:pointer;box-shadow:0 5px 12px rgba(30,33,38,.12),inset 0 1px 0 #fff;transform:translateY(0);transition:transform .2s cubic-bezier(.2,.75,.25,1),box-shadow .2s ease,border-color .2s ease,background .2s ease;touch-action:manipulation}
+.repair-option-card:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(130,136,145,.08) 0 1px,transparent 1px 5px);opacity:.65}
+.repair-option-card:hover,.repair-option-card:focus-visible,.repair-option-card.is-touching{transform:translateY(-5px);border-color:#b99a50;box-shadow:0 13px 21px rgba(39,34,22,.19),0 0 0 2px rgba(205,169,80,.15),inset 0 1px 0 #fff}
+.repair-option-card:focus-visible{outline:3px solid rgba(178,137,43,.45);outline-offset:3px}
+.repair-option-card.is-selected{border-color:#b58c31;border-bottom-color:#a87919;background:linear-gradient(155deg,#fffdf5 0%,#f3eedf 58%,#e9dfc8 100%);box-shadow:0 7px 16px rgba(103,77,20,.2),inset 0 0 0 1px rgba(193,151,55,.22)}
+.repair-option-symbol{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#f4e4b6,#c99d3e);color:#34270b;font-size:19px;box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 2px 5px rgba(0,0,0,.12)}
+.repair-option-name{color:#151515;font-size:14px;font-weight:800;line-height:1.3;overflow-wrap:anywhere}
+.repair-option-action{color:#6e571f;font-size:9px;font-weight:800;letter-spacing:1px}
+.repair-options-empty{grid-column:1/-1;margin:0;padding:16px;border:1px dashed #aaaeb4;border-radius:8px;color:#45484d;font-size:13px;text-align:center}
+.repair-native-select{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important}
+.repair-request-fields{max-width:850px;margin:18px auto 0;padding:18px;border:1px solid #b9a36d;border-radius:9px;background:linear-gradient(145deg,#fbfbfa,#e8e9eb);color:#171717;box-shadow:0 12px 30px rgba(0,0,0,.13)}
+.repair-selected-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;padding:11px 14px;border-left:4px solid #c49a32;background:linear-gradient(90deg,#f1e5c4,#fff);color:#181818}
+.repair-selected-banner span{font-size:10px;font-weight:800;letter-spacing:1px;color:#6e571f}.repair-selected-banner strong{font-size:15px}
+.repair-request-form .repair-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.repair-request-form .repair-field{border:1px solid #c8cbd0;background:rgba(255,255,255,.86);padding:12px;border-radius:6px}
+.repair-request-form .repair-field span{color:#343434}
+.repair-request-form .repair-field input,.repair-request-form .repair-field textarea{width:100%;background:#fff!important;color:#171717!important;border:1px solid #b9bdc3!important;border-radius:5px;padding:12px!important;font:500 14px Montserrat,Arial,sans-serif!important;min-height:46px}
+.repair-request-form .repair-field input::placeholder,.repair-request-form .repair-field textarea::placeholder{color:#777}
+.repair-description-field{grid-column:1/-1}
+.repair-visit-note{margin:12px 0;padding:13px 15px;border-left:4px solid #c49a32;background:#f3f0e8;color:#292929}
+.repair-visit-note strong{font-size:11px;letter-spacing:.8px;color:#6b5119}.repair-visit-note p{margin:5px 0 0;font-size:12px;line-height:1.55;color:#444}
+.repair-request-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.repair-request-actions .btn{min-height:44px}.repair-request-actions .btn.outline{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+@media(max-width:700px){.repair-options-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.repair-request-form .repair-form-grid{grid-template-columns:1fr}.repair-description-field{grid-column:auto}.repair-selected-banner{align-items:flex-start;flex-direction:column}}
+@media(max-width:390px){.repair-options-grid{grid-template-columns:1fr}}
+
