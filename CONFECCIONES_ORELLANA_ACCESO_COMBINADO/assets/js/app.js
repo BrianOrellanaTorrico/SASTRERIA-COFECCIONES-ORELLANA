@@ -14,7 +14,8 @@ let selectedPay="QR"; let verified=false; let currentCI="";
 const priceDefaults={"Pantalón":250,"Saco":500,"Pollera":300,"Vestido de 15 años":900,"Falda":180,"Vestido materno":700,"Vestido de novia":1500,"Vestido de novia para cholitas":1800};
 
 // Catálogo
-const originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
+let originalCatalogOrder = [...document.querySelectorAll('#catalogo .grid .product-card')];
+let catalogById = new Map();
 function filterCatalog(g,b){
   const grid=document.querySelector('#catalogo .grid');
   if(!grid)return;
@@ -48,6 +49,38 @@ function filterCatalog(g,b){
   grid.classList.toggle('filtered-mode',g!=='all');
 }
 
+async function loadDynamicCatalog(){
+  if(!window.OrellanaCatalogService || !window.ORELLANA_SUPABASE)return;
+  try{
+    const garments=await window.OrellanaCatalogService.listGarments();
+    catalogById=new Map(garments.map(g=>[g.id,g]));
+    const grid=document.querySelector('#catalogo .grid');
+    if(grid){
+      grid.innerHTML='';
+      garments.filter(g=>g.category==='femenina'||g.category==='masculina').forEach(g=>{
+        const gender=g.category==='masculina'?'male':'female';
+        const card=document.createElement('article');
+        card.className='card product-card '+(gender==='male'?'male-card':'female-card');
+        card.dataset.gender=gender;card.dataset.service=g.name;card.dataset.price=g.sewing_price??'';
+        const image=g.garment_images?.[0];
+        const imageUrl=image?window.OrellanaCatalogService.publicImageUrl(image.storage_path):'';
+        const priceLabel=g.sewing_price===null?'Cotización personalizada':'Desde Bs. '+Number(g.sewing_price).toLocaleString('es-BO');
+        card.innerHTML='<span class="garment-frame"></span><span class="metal-buttons"><i></i><i></i><i></i></span><div class="sample">'+(imageUrl?'<img loading="lazy" alt="'+escapeHtml(image.alt_text||g.name)+'" src="'+imageUrl+'">':'<div class="catalog-placeholder">CONFECCIONES<br>ORELLANA</div>')+'</div><h3>'+escapeHtml(g.name)+'</h3><p>'+escapeHtml(g.description||'Confección personalizada a medida.')+'</p><div class="price">'+priceLabel+'</div><button class="mini" type="button">PERSONALIZAR</button>';
+        card.querySelector('button').addEventListener('click',()=>openCustomizer(g.name,g.sewing_price,gender,g.id));
+        grid.appendChild(card);
+      });
+      originalCatalogOrder=[...grid.querySelectorAll('.product-card')];
+      const allTab=document.querySelector('.gender-tab[onclick*="all"]');
+      filterCatalog('all',allTab);
+    }
+    const repair=document.getElementById('repairGarment');
+    if(repair){
+      const repairs=garments.filter(g=>g.category==='arreglos');
+      repair.innerHTML='<option value="">Selecciona una prenda para arreglar</option>'+repairs.map(g=>'<option value="'+g.id+'">'+escapeHtml(g.name)+'</option>').join('');
+    }
+  }catch(error){console.error('[ORELLANA] No se pudo cargar el catálogo remoto:',error)}
+}
+
 function startRepairOrder(){
   const garment=document.getElementById('repairGarment');
   const details=document.getElementById('repairDetails');
@@ -57,22 +90,31 @@ function startRepairOrder(){
     if(garment)garment.focus();
     return;
   }
-  const repairName='Arreglo de '+garment.value;
-  openCustomizer(repairName,30,'repair');
+  const selectedGarment=catalogById.get(garment.value);
+  const repairName='Arreglo de '+(selectedGarment?.name||garment.options[garment.selectedIndex]?.text||'prenda');
+  openCustomizer(repairName,selectedGarment?.sewing_price??null,'repair',selectedGarment?.id||null);
   const notes=document.getElementById('cNotes');
   if(notes)notes.value=details && details.value.trim() ? details.value.trim() : 'Tipo de arreglo por confirmar con el taller';
   refreshCustomizerTotal();
   if(status)status.textContent='Seleccionaste '+garment.value+'. Completa las especificaciones y añádelo al carrito para preparar el pedido.';
 }
-function openCustomizer(service,price,gender){
-  customService=service; customBase=getPrice(service,price); customGender=gender;
+async function openCustomizer(service,price,gender,garmentId=null){
+  customService=service; customBase=price===null||price===undefined?null:getPrice(service,price); customGender=gender;
   document.getElementById('customTitle').textContent='Personalizar: '+service;
   populateFabricSelect('cFabric', service);
+  const fabricSelect=document.getElementById('cFabric');
+  if(fabricSelect && garmentId && window.OrellanaCatalogService){
+    try{
+      const compatible=await window.OrellanaCatalogService.listGarmentFabrics(garmentId);
+      fabricSelect.innerHTML='<option value="">Selecciona una tela compatible</option>'+compatible.map(f=>'<option value="'+escapeHtml(f.name)+'">'+escapeHtml(f.name)+(f.price_per_meter===null?' · cotizar':' · Bs. '+Number(f.price_per_meter).toFixed(2)+'/m')+'</option>').join('');
+      if(!compatible.length)fabricSelect.innerHTML='<option value="">Tela por confirmar con el taller</option>';
+    }catch(error){console.warn('[ORELLANA] No se pudieron cargar telas compatibles:',error)}
+  }
   document.getElementById('cQty').value=1; document.getElementById('cColor').value=''; document.getElementById('cNotes').value='';
   document.querySelector('.customizer').classList.add('active'); refreshCustomizerTotal();
   document.getElementById('personalizador').scrollIntoView({behavior:'smooth',block:'center'});
 }
-function refreshCustomizerTotal(){const q=Math.max(1,Number(document.getElementById('cQty').value)||1);document.getElementById('cPrice').textContent='Bs. '+(customBase*q).toFixed(2)}
+function refreshCustomizerTotal(){const q=Math.max(1,Number(document.getElementById('cQty').value)||1);document.getElementById('cPrice').textContent=customBase===null?'Cotización pendiente':'Bs. '+(customBase*q).toFixed(2)}
 function addConfiguredProduct(){
   if(!customService)return alert('Selecciona primero una prenda.');
   const q=Math.max(1,Number(document.getElementById('cQty').value)||1);
@@ -81,14 +123,17 @@ function addConfiguredProduct(){
 }
 function renderCart(){
   const b=document.getElementById('cartItems');
-  b.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><strong style="color:${i.gender==='male'?'#e4c85d':'#dce0e6'}">${i.service}</strong><div style="font-size:11px;color:#777;margin-top:5px">${i.fabric} · ${i.color} · ${i.style}<br>${i.notes}</div><div class="qty-control"><button onclick="changeQty(${i.id},-1)">−</button><span>${i.qty}</span><button onclick="changeQty(${i.id},1)">+</button><strong style="margin-left:auto;color:${i.gender==='male'?'#d4af37':'#d7dce2'}">Bs. ${(i.price*i.qty).toFixed(2)}</strong></div><button onclick="removeCart(${i.id})" style="margin-top:7px;background:none;border:0;color:#8e6060;font-size:11px">Eliminar</button></div>`).join(''):'<div style="padding:30px 0;color:#777">Tu carrito está vacío.</div>';
-  const u=cart.reduce((a,x)=>a+x.qty,0),t=cart.reduce((a,x)=>a+x.price*x.qty,0); document.getElementById('cartCount').textContent=u; document.getElementById('cartUnits').textContent=u; document.getElementById('cartSubtotal').textContent='Bs. '+t.toFixed(2); document.getElementById('cartTotal').textContent='Bs. '+t.toFixed(2);
+  b.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><strong style="color:${i.gender==='male'?'#e4c85d':'#dce0e6'}">${escapeHtml(i.service)}</strong><div style="font-size:11px;color:#777;margin-top:5px">${escapeHtml(i.fabric)} · ${escapeHtml(i.color)} · ${escapeHtml(i.style)}<br>${escapeHtml(i.notes)}</div><div class="qty-control"><button onclick="changeQty(${i.id},-1)">−</button><span>${i.qty}</span><button onclick="changeQty(${i.id},1)">+</button><strong style="margin-left:auto;color:${i.gender==='male'?'#d4af37':'#d7dce2'}">${i.price===null?'Por cotizar':'Bs. '+(i.price*i.qty).toFixed(2)}</strong></div><button onclick="removeCart(${i.id})" style="margin-top:7px;background:none;border:0;color:#8e6060;font-size:11px">Eliminar</button></div>`).join(''):'<div style="padding:30px 0;color:#777">Tu carrito está vacío.</div>';
+  const u=cart.reduce((a,x)=>a+x.qty,0),known=cart.every(x=>x.price!==null),t=cart.reduce((a,x)=>a+(x.price||0)*x.qty,0);
+  document.getElementById('cartCount').textContent=u; document.getElementById('cartUnits').textContent=u;
+  document.getElementById('cartSubtotal').textContent=known?'Bs. '+t.toFixed(2):'Por cotizar';
+  document.getElementById('cartTotal').textContent=known?'Bs. '+t.toFixed(2):'Por cotizar';
 }
 function changeQty(id,d){const i=cart.find(x=>x.id===id);if(i){i.qty=Math.max(1,i.qty+d);renderCart()}}
 function removeCart(id){const n=cart.findIndex(x=>x.id===id);if(n>-1)cart.splice(n,1);renderCart()}
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('drawerOverlay').classList.add('open')}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');if(!document.getElementById('drawerLeft').classList.contains('open')&&!document.getElementById('drawerRight').classList.contains('open'))document.getElementById('drawerOverlay').classList.remove('open')}
-function goToOrder(){closeCart();if(cart.length){document.getElementById('service').value=cart[0].service+'|'+cart[0].price;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
+function goToOrder(){closeCart();if(cart.length){const select=document.getElementById('service');const value=cart[0].service+'|'+(cart[0].price??'');if(![...select.options].some(o=>o.value===value))select.add(new Option(cart[0].service,value));select.value=value;document.getElementById('qty').value=cart.reduce((a,x)=>a+x.qty,0);updateTotal()}document.getElementById('pedido').scrollIntoView({behavior:'smooth'})}
 function getPrice(service,fallback){return Number(localStorage.getItem('price_'+service))||Number(fallback)||0}
 function savePrices(){if(!can("catalogo"))return alert("Tu cuenta no tiene permiso para editar el catálogo.");document.querySelectorAll('.admin-price').forEach(inp=>{const service=inp.dataset.service;const val=Math.max(0,Number(inp.value)||0);localStorage.setItem('price_'+service,val);document.querySelectorAll(`.product-card[data-service="${service}"] .price`).forEach(x=>x.textContent='Desde Bs. '+val.toLocaleString('es-BO'));document.querySelectorAll(`#service option[value^="${service}|"]`).forEach(o=>o.value=service+'|'+val);});alert('Precios actualizados en este navegador.')}
 
@@ -201,11 +246,11 @@ function updateTotal(){
   if(!select||!qtyInput)return;
   const parts=(select.value||'').split('|');
   const name=parts[0]||'—';
-  const price=Number(parts[1])||0;
+  const price=parts[1]===''?null:Number(parts[1]);
   const qty=Math.max(1,Number(qtyInput.value)||1);
-  const total=price*qty;
+  const total=price===null?null:price*qty;
   const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
-  setText('rService',name); setText('rQty',qty); setText('rPrice','Bs. '+price.toFixed(2)); setText('rTotal','Bs. '+total.toFixed(2));
+  setText('rService',name); setText('rQty',qty); setText('rPrice',price===null?'Por cotizar':'Bs. '+price.toFixed(2)); setText('rTotal',total===null?'Por cotizar':'Bs. '+total.toFixed(2));
 }
 function choosePay(el,method){selectedPay=method;const s=document.getElementById('payStatus');if(s){s.textContent='Método seleccionado: '+method+'. El pago debe ser verificado manualmente por el propietario.';s.classList.add('show')}}
 
@@ -426,6 +471,7 @@ function initializeApp(){
   document.getElementById('service')?.addEventListener('change',renderOrderFabricOptions);
   toggleMeasurementRequest();
   setupImageUploads();
+  loadDynamicCatalog();
 }
 
 async function submitOrder(e){
@@ -438,7 +484,10 @@ async function submitOrder(e){
   const serviceParts = (document.getElementById('service')?.value || '').split('|');
   const service = serviceParts[0] || 'Servicio por confirmar';
   const totalText = document.getElementById('rTotal')?.textContent || '';
-  const quotedTotal = Number(totalText.replace(/[^0-9,.-]/g, '').replace(/\.(?=.*\.)/g, '').replace(',', '.'));
+  const cartHasUnknownPrice = cart.some(item => item.price === null);
+  const cartTotal = cart.reduce((sum,item) => sum + (item.price || 0) * item.qty, 0);
+  const parsedTotal = Number(totalText.replace(/[^0-9,.-]/g, '').replace(/\.(?=.*\.)/g, '').replace(',', '.'));
+  const quotedTotal = cart.length ? (cartHasUnknownPrice ? null : cartTotal) : (totalText.includes('cotizar') || !Number.isFinite(parsedTotal) || parsedTotal <= 0 ? null : parsedTotal);
   const order = {
     name, phone, service,
     quotedTotal: Number.isFinite(quotedTotal) ? quotedTotal : null,
